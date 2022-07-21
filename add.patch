@@ -1,0 +1,4229 @@
+diff --git a/CODEOWNERS b/CODEOWNERS
+index 1eaef047..643b937b 100644
+--- a/CODEOWNERS
++++ b/CODEOWNERS
+@@ -21,6 +21,7 @@
+ /bundles/org.openhab.binding.autelis/ @digitaldan
+ /bundles/org.openhab.binding.automower/ @maxpg
+ /bundles/org.openhab.binding.avmfritz/ @cweitkamp
++/bundles/org.openhab.binding.balboa/ @carlonnheim
+ /bundles/org.openhab.binding.bigassfan/ @mhilbush
+ /bundles/org.openhab.binding.bluetooth/ @cdjackson @cpmeister
+ /bundles/org.openhab.binding.bluetooth.airthings/ @paulianttila
+diff --git a/bom/openhab-addons/pom.xml b/bom/openhab-addons/pom.xml
+index 38448851..df90be4b 100644
+--- a/bom/openhab-addons/pom.xml
++++ b/bom/openhab-addons/pom.xml
+@@ -96,6 +96,11 @@
+       <artifactId>org.openhab.binding.avmfritz</artifactId>
+       <version>${project.version}</version>
+     </dependency>
++    <dependency>
++      <groupId>org.openhab.addons.bundles</groupId>
++      <artifactId>org.openhab.binding.balboa</artifactId>
++      <version>${project.version}</version>
++    </dependency>
+     <dependency>
+       <groupId>org.openhab.addons.bundles</groupId>
+       <artifactId>org.openhab.binding.bigassfan</artifactId>
+diff --git a/bundles/org.openhab.binding.balboa/NOTICE b/bundles/org.openhab.binding.balboa/NOTICE
+new file mode 100644
+index 00000000..38d625e3
+--- /dev/null
++++ b/bundles/org.openhab.binding.balboa/NOTICE
+@@ -0,0 +1,13 @@
++This content is produced and maintained by the openHAB project.
++
++* Project home: https://www.openhab.org
++
++== Declared Project Licenses
++
++This program and the accompanying materials are made available under the terms
++of the Eclipse Public License 2.0 which is available at
++https://www.eclipse.org/legal/epl-2.0/.
++
++== Source Code
++
++https://github.com/openhab/openhab-addons
+diff --git a/bundles/org.openhab.binding.balboa/README.md b/bundles/org.openhab.binding.balboa/README.md
+new file mode 100644
+index 00000000..efbd3d49
+--- /dev/null
++++ b/bundles/org.openhab.binding.balboa/README.md
+@@ -0,0 +1,56 @@
++# Balboa Binding
++
++_Give some details about what this binding is meant for - a protocol, system, specific device._
++
++_If possible, provide some resources like pictures, a YouTube video, etc. to give an impression of what can be done with this binding. You can place such resources into a `doc` folder next to this README.md._
++
++## Supported Things
++
++_Please describe the different supported things / devices within this section._
++_Which different types are supported, which models were tested etc.?_
++_Note that it is planned to generate some part of this based on the XML files within ```src/main/resources/OH-INF/thing``` of your binding._
++
++## Discovery
++
++_Describe the available auto-discovery features here. Mention for what it works and what needs to be kept in mind when using it._
++
++## Binding Configuration
++
++_If your binding requires or supports general configuration settings, please create a folder ```cfg``` and place the configuration file ```<bindingId>.cfg``` inside it. In this section, you should link to this file and provide some information about the options. The file could e.g. look like:_
++
++```
++# Configuration for the Philips Hue Binding
++#
++# Default secret key for the pairing of the Philips Hue Bridge.
++# It has to be between 10-40 (alphanumeric) characters
++# This may be changed by the user for security reasons.
++secret=openHABSecret
++```
++
++_Note that it is planned to generate some part of this based on the information that is available within ```src/main/resources/OH-INF/binding``` of your binding._
++
++_If your binding does not offer any generic configurations, you can remove this section completely._
++
++## Thing Configuration
++
++_Describe what is needed to manually configure a thing, either through the (Paper) UI or via a thing-file. This should be mainly about its mandatory and optional configuration parameters. A short example entry for a thing file can help!_
++
++_Note that it is planned to generate some part of this based on the XML files within ```src/main/resources/OH-INF/thing``` of your binding._
++
++## Channels
++
++_Here you should provide information about available channel types, what their meaning is and how they can be used._
++
++_Note that it is planned to generate some part of this based on the XML files within ```src/main/resources/OH-INF/thing``` of your binding._
++
++| channel  | type   | description                  |
++|----------|--------|------------------------------|
++| control  | Switch | This is the control channel  |
++
++## Full Example
++
++_Provide a full usage example based on textual configuration files (*.things, *.items, *.sitemap)._
++
++## Any custom content here!
++
++_Feel free to add additional sections for whatever you think should also be mentioned about your binding!_
+diff --git a/bundles/org.openhab.binding.balboa/pom.xml b/bundles/org.openhab.binding.balboa/pom.xml
+new file mode 100644
+index 00000000..f211222a
+--- /dev/null
++++ b/bundles/org.openhab.binding.balboa/pom.xml
+@@ -0,0 +1,17 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
++  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
++
++  <modelVersion>4.0.0</modelVersion>
++
++  <parent>
++    <groupId>org.openhab.addons.bundles</groupId>
++    <artifactId>org.openhab.addons.reactor.bundles</artifactId>
++    <version>3.1.0-SNAPSHOT</version>
++  </parent>
++
++  <artifactId>org.openhab.binding.balboa</artifactId>
++
++  <name>openHAB Add-ons :: Bundles :: Balboa Binding</name>
++
++</project>
+diff --git a/bundles/org.openhab.binding.balboa/src/main/feature/feature.xml b/bundles/org.openhab.binding.balboa/src/main/feature/feature.xml
+new file mode 100644
+index 00000000..ea7ec2ab
+--- /dev/null
++++ b/bundles/org.openhab.binding.balboa/src/main/feature/feature.xml
+@@ -0,0 +1,23 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!--
++
++	Copyright (c) 2010-2020 Contributors to the openHAB project
++
++	See the NOTICE file(s) distributed with this work for additional
++	information.
++
++	This program and the accompanying materials are made available under the
++	terms of the Eclipse Public License 2.0 which is available at
++	http://www.eclipse.org/legal/epl-2.0
++
++	SPDX-License-Identifier: EPL-2.0
++
++-->
++<features name="org.openhab.binding.balboa-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
++	<repository>mvn:org.openhab.core.features.karaf/org.openhab.core.features.karaf.openhab-core/${ohc.version}/xml/features</repository>
++
++	<feature name="openhab-binding-balboa" description="Balboa Binding" version="${project.version}">
++		<feature>openhab-runtime-base</feature>
++		<bundle start-level="80">mvn:org.openhab.addons.bundles/org.openhab.binding.balboa/${project.version}</bundle>
++	</feature>
++</features>
+diff --git a/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaBindingConstants.java b/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaBindingConstants.java
+new file mode 100644
+index 00000000..c236706e
+--- /dev/null
++++ b/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaBindingConstants.java
+@@ -0,0 +1,33 @@
++/**
++ * Copyright (c) 2010-2020 Contributors to the openHAB project
++ *
++ * See the NOTICE file(s) distributed with this work for additional
++ * information.
++ *
++ * This program and the accompanying materials are made available under the
++ * terms of the Eclipse Public License 2.0 which is available at
++ * http://www.eclipse.org/legal/epl-2.0
++ *
++ * SPDX-License-Identifier: EPL-2.0
++ */
++package org.openhab.binding.balboa.internal;
++
++import org.eclipse.jdt.annotation.NonNullByDefault;
++import org.openhab.core.thing.ThingTypeUID;
++
++/**
++ * The {@link BalboaBindingConstants} class defines common constants, which are
++ * used across the whole binding.
++ *
++ * @author Carl Önnheim - Initial contribution
++ */
++@NonNullByDefault
++public class BalboaBindingConstants {
++
++    protected static final String BINDING_ID = "balboa";
++
++    public static final Integer DEFAULT_PORT = 4257;
++
++    // List of all Thing Type UIDs
++    public static final ThingTypeUID THING_TYPE_BALBOA_IP = new ThingTypeUID(BINDING_ID, "balboa-ip");
++}
+diff --git a/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaConfiguration.java b/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaConfiguration.java
+new file mode 100644
+index 00000000..6990f34d
+--- /dev/null
++++ b/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaConfiguration.java
+@@ -0,0 +1,28 @@
++/**
++ * Copyright (c) 2010-2020 Contributors to the openHAB project
++ *
++ * See the NOTICE file(s) distributed with this work for additional
++ * information.
++ *
++ * This program and the accompanying materials are made available under the
++ * terms of the Eclipse Public License 2.0 which is available at
++ * http://www.eclipse.org/legal/epl-2.0
++ *
++ * SPDX-License-Identifier: EPL-2.0
++ */
++package org.openhab.binding.balboa.internal;
++
++import org.eclipse.jdt.annotation.NonNullByDefault;
++
++/**
++ * The {@link BalboaConfiguration} class contains fields mapping thing configuration parameters.
++ *
++ * @author Carl Önnheim - Initial contribution
++ */
++@NonNullByDefault
++public class BalboaConfiguration {
++    public String host = "";
++    public int port;
++    public int reconnectInterval;
++    public int pollingInterval;
++}
+diff --git a/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaHandler.java b/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaHandler.java
+new file mode 100644
+index 00000000..5f6519cb
+--- /dev/null
++++ b/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaHandler.java
+@@ -0,0 +1,1043 @@
++/**
++ * Copyright (c) 2010-2020 Contributors to the openHAB project
++ *
++ * See the NOTICE file(s) distributed with this work for additional
++ * information.
++ *
++ * This program and the accompanying materials are made available under the
++ * terms of the Eclipse Public License 2.0 which is available at
++ * http://www.eclipse.org/legal/epl-2.0
++ *
++ * SPDX-License-Identifier: EPL-2.0
++ */
++package org.openhab.binding.balboa.internal;
++
++import java.util.HashMap;
++import java.util.concurrent.ScheduledFuture;
++import java.util.concurrent.TimeUnit;
++
++import javax.measure.quantity.Temperature;
++
++import org.eclipse.jdt.annotation.NonNullByDefault;
++import org.eclipse.jdt.annotation.Nullable;
++import org.openhab.binding.balboa.internal.BalboaMessage.ItemType;
++import org.openhab.binding.balboa.internal.BalboaMessage.PanelConfigurationResponseMessage;
++import org.openhab.binding.balboa.internal.BalboaMessage.SettingsRequestMessage.SettingsType;
++import org.openhab.binding.balboa.internal.BalboaProtocol.Handler;
++import org.openhab.binding.balboa.internal.BalboaProtocol.Status;
++import org.openhab.core.library.types.OnOffType;
++import org.openhab.core.library.types.OpenClosedType;
++import org.openhab.core.library.types.QuantityType;
++import org.openhab.core.library.types.StringType;
++import org.openhab.core.library.unit.ImperialUnits;
++import org.openhab.core.library.unit.SIUnits;
++import org.openhab.core.thing.Channel;
++import org.openhab.core.thing.ChannelUID;
++import org.openhab.core.thing.Thing;
++import org.openhab.core.thing.ThingStatus;
++import org.openhab.core.thing.ThingStatusDetail;
++import org.openhab.core.thing.binding.BaseThingHandler;
++import org.openhab.core.thing.binding.builder.ChannelBuilder;
++import org.openhab.core.thing.binding.builder.ThingBuilder;
++import org.openhab.core.thing.type.ChannelTypeUID;
++import org.openhab.core.types.Command;
++import org.openhab.core.types.RefreshType;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++
++/**
++ * The {@link BalboaHandler} is responsible for handling Balboa things.
++ *
++ * @author Carl Önnheim - Initial contribution
++ */
++@NonNullByDefault
++public class BalboaHandler extends BaseThingHandler implements Handler {
++
++    // Logger and configuration fields
++    private final Logger logger = LoggerFactory.getLogger(BalboaHandler.class);
++    private BalboaConfiguration config = getConfigAs(BalboaConfiguration.class);
++
++    // Instantiate a protocol with this instance as the handler (receiving callbacks)
++    private BalboaProtocol protocol = new BalboaProtocol(this);
++    // This manages the reconnection attempts
++    private ReconnectJob reconnectJob = new ReconnectJob();
++    // This is used to poll the unit for non-broadcast information and keeping the connection alive.
++    private PollingJob pollingJob = new PollingJob();
++
++    /**
++     * Helper class providing a thread safe reconnection mechanism.
++     *
++     * @author CarlÖnnheim
++     *
++     */
++    private class ReconnectJob implements Runnable {
++        private @Nullable ScheduledFuture<?> job;
++        private boolean enabled = false;
++
++        /**
++         * Enables the reconnection mechanism
++         */
++        public void enable() {
++            // Store the state
++            enabled = true;
++        }
++
++        /**
++         * Disables the reconnection mechanism
++         */
++        public void disable() {
++            // Cancel pending reconnects if disabled
++            if (job != null) {
++                job.cancel(true);
++                job = null;
++            }
++
++            // Store the state
++            enabled = false;
++        }
++
++        /**
++         * Schedules a reconnect if enabled and not already pending.
++         */
++        public synchronized void schedule() {
++            if (enabled && job == null && config.reconnectInterval > 0) {
++                job = scheduler.schedule(this, config.reconnectInterval, TimeUnit.SECONDS);
++                logger.debug("Reconnection attempt in {} seconds", config.reconnectInterval);
++            }
++        }
++
++        /**
++         * Performs the reconnect and marks the job as not pending
++         */
++        @Override
++        public synchronized void run() {
++            // Clear the job first since a new reconnect may be scheduled by the connect call
++            job = null;
++            logger.debug("Reconnecting...");
++            connect();
++        }
++    }
++
++    /**
++     * Helper class providing a thread safe polling mechanism.
++     *
++     * @author CarlÖnnheim
++     *
++     */
++    private class PollingJob implements Runnable {
++        private @Nullable ScheduledFuture<?> job;
++
++        /**
++         * Starts polling if not already active.
++         */
++        public synchronized void start() {
++            if (job == null && config.pollingInterval > 0) {
++                job = scheduler.scheduleWithFixedDelay(this, config.pollingInterval, config.pollingInterval,
++                        TimeUnit.SECONDS);
++                logger.debug("Polling started with {} seconds interval", config.pollingInterval);
++            }
++        }
++
++        /**
++         * Stops polling if active.
++         */
++        public synchronized void stop() {
++            if (job != null) {
++                job.cancel(true);
++                logger.debug("Polling stopped");
++                job = null;
++            }
++        }
++
++        /**
++         * Sends a polling packet
++         */
++        @Override
++        public void run() {
++            logger.trace("Polling the unit");
++            // Send an information request
++            protocol.sendMessage(new BalboaMessage.SettingsRequestMessage(SettingsType.INFORMATION));
++        }
++    }
++
++    // We keep all channels in a hash map. It is easier to treat all channels the same way, since the majority are
++    // dynamic.
++    private class ChannelMap extends HashMap<ChannelUID, BalboaChannel> {
++        private static final long serialVersionUID = 1L;
++
++        // Helper method to add a channel with its UID as key
++        protected void addChannel(BalboaChannel channel) {
++            put(channel.getChannelUID(), channel);
++        }
++    }
++
++    private ChannelMap channels = new ChannelMap();
++
++    /*
++     * Basic structure of the handler implementation is as follows
++     *
++     * Block A - Basic handler functions. Deals with instatiation, intitialize/dispose and handling of commands
++     * Block B - Handling events from the communication protocol (status updates and messages).
++     * Block C - Passing updates to/from the framework from/to the balboa unit.
++     *
++     * Block A begins here
++     *
++     */
++
++    /**
++     * Constructs a {@link BalboaHandler} for a thing.
++     *
++     * @param thing
++     */
++    public BalboaHandler(Thing thing) {
++        super(thing);
++    }
++
++    /**
++     * Initializes a {@link BalboaHandler}. The configuration is reread and the communication protocol with the unit is
++     * connected.
++     *
++     */
++    @Override
++    public void initialize() {
++
++        // Initialize the status as UNKNOWN. The protocol will update the status in callbacks.
++        updateStatus(ThingStatus.UNKNOWN);
++
++        // Allow reconnect attempts
++        reconnectJob.enable();
++
++        // Connect the protocol
++        connect();
++    }
++
++    /**
++     * Attempts to connect the {@link BalboaProtocol}
++     *
++     */
++    public void connect() {
++        // Reread the configuration
++        config = getConfigAs(BalboaConfiguration.class);
++
++        // Connect the protocol
++        logger.info("Starting balboa protocol with {} at {}", config.host, config.port);
++        protocol.connect(config.host, config.port);
++    }
++
++    /**
++     * Disposes as {@link BalboaHandler}. The communication protocol with the unit is disconnected.
++     */
++    @Override
++    public void dispose() {
++        // Stop any active polling job
++        pollingJob.stop();
++
++        // Disallow reconnect attempts and disconnect
++        reconnectJob.disable();
++        protocol.disconnect();
++    }
++
++    /**
++     * Handles commands sent to the {@link BalboaHandler}. All channels are handled by inner classes implementing the
++     * {@link BalboaChannel} interface. This method will look up the {@link BalboaChannel} in question and pass the
++     * command along to it.
++     */
++    @Override
++    public void handleCommand(ChannelUID channelUID, Command command) {
++        // Pass the command to the given channel
++        if (channels.containsKey(channelUID)) {
++            channels.get(channelUID).handleCommand(command);
++        } else {
++            logger.warn("Command received on unknown channel: {}", channelUID.getAsString());
++        }
++    }
++
++    /*
++     * Block B - Handling events from the communication protocol (status updates and messages).
++     *
++     * The BalboaProtocol manages the communication with the Balboa Unit. State Changes and Incoming Messages will be
++     * passed back to the handler using these callbacks.
++     */
++
++    /**
++     * Handles state changes on the protocol. The callback receives an enumerated status and a descriptive detail.
++     */
++    @Override
++    public void onStateChange(Status status, String detail) {
++        // Stop any active polling job before handling status transitions
++        pollingJob.stop();
++
++        // Handle the status transition
++        switch (status) {
++            case INITIAL:
++                // No action is required
++                break;
++            case CONFIGURATION_PENDING:
++                // Report back to the framework that we are waiting for configuration of the unit.
++                logger.debug("Balboa Protocol Pending Ponfiguration: {}", detail);
++                updateStatus(ThingStatus.ONLINE, ThingStatusDetail.ONLINE.CONFIGURATION_PENDING, detail);
++                break;
++            case ERROR:
++                // Report back to the framework that we have an error. Schedule a reconnect
++                logger.debug("Balboa Protocol Error: {}", detail);
++                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.CONFIGURATION_ERROR, detail);
++                reconnectJob.schedule();
++                break;
++            case OFFLINE:
++                // Schedule a reconnect (nothing will happen if reconnects are disabled)
++                reconnectJob.schedule();
++                // We only update status if we were online (we are in disposal otherwise).
++                if (this.getThing().getStatus() == ThingStatus.ONLINE) {
++                    updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, detail);
++                    logger.info("Balboa Protocol went Offline");
++                } else {
++                    logger.debug("Balboa Protocol disconnected");
++                }
++                break;
++            case ONLINE:
++                updateStatus(ThingStatus.ONLINE);
++                logger.info("Balboa Protocol is Online");
++                // Start sending poll messages
++                pollingJob.start();
++                break;
++            default:
++                break;
++        }
++    }
++
++    /**
++     * Handles messages received by the communication protocol. The callback receives the parsed message. Panel
++     * Configuration messages are used to configure the Thing itself (determining what channels it actually has). Other
++     * messages are passed to each channel to determine if anything is to be done with it.
++     */
++    @Override
++    public void onMessage(BalboaMessage message) {
++        logger.trace("Received a {}", message.getClass().getName());
++
++        // Update the thing configuration (channels) on panel configuration messages
++        if (message instanceof BalboaMessage.PanelConfigurationResponseMessage) {
++            BalboaMessage.PanelConfigurationResponseMessage config = (PanelConfigurationResponseMessage) message;
++
++            // This only happens once after each connect. Clear the channels we have from before and start over.
++            channels.clear();
++
++            // These channels are always there
++            channels.addChannel(new TemperatureChannel("current-temperature", "Current Temperature", false));
++            channels.addChannel(new TemperatureChannel("target-temperature", "Target Temperature", true));
++            channels.addChannel(new TemperatureScale());
++            channels.addChannel(new TemperatureRange());
++            channels.addChannel(new HeatMode());
++            channels.addChannel(new FilterStatus());
++            channels.addChannel(new ContactChannel(ItemType.PRIMING, "priming", "Priming", "priming"));
++            channels.addChannel(
++                    new ContactChannel(ItemType.CIRCULATION, "circulation", "Circulation Pump", "circulation"));
++            channels.addChannel(new ContactChannel(ItemType.HEATER, "heater", "Heater", "heater"));
++
++            // Add pumps based on the configuration message. These can be one- or two-speed (Switch or OFF/LOW/HIGH).
++            // TODO: Two-speed pumps have not been tested (need a user with such items in the unit)
++            for (int i = 0; i < BalboaProtocol.MAX_PUMPS; i++) {
++                switch (config.getPump(i)) {
++                    // One-speed pump
++                    case 0x01:
++                        channels.addChannel(new OneSpeedToggle(ItemType.PUMP, i, String.format("pump-%d", i + 1),
++                                String.format("Jet Pump %d, one-speed", i + 1), "pump1"));
++                        break;
++                    // Two-speed pump
++                    case 0x02:
++                        channels.addChannel(new TwoSpeedToggle(ItemType.PUMP, i, String.format("pump-%d", i + 1),
++                                String.format("Jet Pump %d, two-speed", i + 1), "pump2"));
++                        break;
++                }
++            }
++
++            // Add lights based on the configuration message. These can be one- or two-level (Switch or OFF/LOW/HIGH).
++            // TODO: Two-level lights have not been tested (need a user with such items in the unit)
++            for (int i = 0; i < BalboaProtocol.MAX_LIGHTS; i++) {
++                switch (config.getLight(i)) {
++                    // One-level light
++                    case 0x01:
++                        channels.addChannel(new OneSpeedToggle(ItemType.LIGHT, i, String.format("light-%d", i + 1),
++                                String.format("Light %d, one-level", i + 1), "light1"));
++                        break;
++                    // Two-level light
++                    case 0x02:
++                        channels.addChannel(new TwoSpeedToggle(ItemType.LIGHT, i, String.format("light-%d", i + 1),
++                                String.format("Light %d, two-level", i + 1), "light2"));
++                        break;
++                }
++            }
++
++            // Add aux items based on the configuration message. These are always one-speed.
++            // TODO: Not tested (need a user with such items in the unit)
++            for (int i = 0; i < BalboaProtocol.MAX_AUX; i++) {
++                if (config.getAux(i)) {
++                    channels.addChannel(new OneSpeedToggle(ItemType.AUX, i, String.format("aux-%d", i + 1),
++                            String.format("AUX %d", i + 1), "aux"));
++                }
++            }
++
++            // Blower. These can be one- or two-speed (Switch or OFF/LOW/HIGH).
++            // TODO: Two-speed blowers have not been tested (need a user with such items in the unit).
++            switch (config.getBlower()) {
++                // One-speed blower
++                case 0x01:
++                    channels.addChannel(
++                            new OneSpeedToggle(ItemType.BLOWER, 0, "blower", "Blower, one-speed", "blower1"));
++                    break;
++                // Two-speed blower
++                case 0x02:
++                    channels.addChannel(
++                            new TwoSpeedToggle(ItemType.BLOWER, 0, "blower", "Blower, two-speed", "blower2"));
++                    break;
++            }
++
++            // Mister. These can be one- or two-speed (Switch or OFF/LOW/HIGH).
++            // TODO: Two-speed misters have not been tested (need a user with such items in the unit).
++            switch (config.getMister()) {
++                // One-speed mister
++                case 0x01:
++                    channels.addChannel(
++                            new OneSpeedToggle(ItemType.MISTER, 0, "mister1", "Mister, one-speed", "mister1"));
++                    break;
++                // Two-speed mister
++                case 0x02:
++                    channels.addChannel(
++                            new TwoSpeedToggle(ItemType.MISTER, 0, "mister2", "Mister, two-speed", "mister2"));
++                    break;
++            }
++
++            // Build the channels on the thing. Start by wiping all channels existing (e.g. from a previous connect)
++            ThingBuilder builder = editThing().withoutChannels(getThing().getChannels());
++            // Add the channels determined above.
++            for (BalboaChannel channel : channels.values()) {
++                builder.withChannel(channel.getChannel());
++            }
++
++            // Update the thing with the channels
++            updateThing(builder.build());
++
++        } else {
++            // Any other message type is passed to the respective channels to determine state updates
++            for (BalboaChannel channel : channels.values()) {
++                channel.handleUpdate(message);
++            }
++        }
++    }
++
++    /*
++     * Block C - Passing updates to/from the framework from/to the balboa unit.
++     *
++     * This is implemented as a set of classes implementing a common interface (BalboaChannel) since many of the exposed
++     * items have things in common. A hierarchy of classes in turn implement this interface as follows:
++     * - BaseBalboaChannel - implements things common to all channels (building the channel and handling channel UID's)
++     * |- ContactChannel - handles binary read only states received from the protocol
++     * |- OneSpeedToggle - handles binary read/write states with the protocol (Switches)
++     * |- TwoSpeedToggle - handles (OFF/LOW/HIGH) channels (as Strings with coded values)
++     * |- Specific handlers for HeatMode, TemperatureChannel, TemperatureScale, TemperatureRange and FilterStatus
++     */
++
++    // We need to track what temperature scale and range we are currently at, in order to form update messages properly.
++    private boolean celciusDisplay, temperatureHighRange;
++
++    /**
++     * Channels exposed by the Balboa Unit are handled by classes implementing the {@link BalboaChannel} interface.
++     *
++     * @author CarlÖnnheim
++     *
++     */
++    private interface BalboaChannel {
++        /**
++         * Returns the {@link ChannelUID} of a {@link BalboaChannel}
++         *
++         * @return A {@link ChannelUID}
++         */
++        public ChannelUID getChannelUID();
++
++        /**
++         * Returns the {@link Channel} representation of a {@link BalboaChannel}
++         *
++         * @return A {@link Channel}
++         */
++        public Channel getChannel();
++
++        /**
++         * Handles commands sent to the channel
++         *
++         * @param command The command sent from the framework
++         */
++        public void handleCommand(Command command);
++
++        /**
++         * Transforms incoming messages from the Balboa Unit to status updates of the {@link Thing}
++         *
++         * @param message The message received from the communication protocol
++         */
++        public void handleUpdate(BalboaMessage message);
++    }
++
++    /**
++     * Base class for channels, implementing common logic
++     *
++     * @author CarlÖnnheim
++     *
++     */
++    private abstract class BaseBalboaChannel implements BalboaChannel {
++        private ChannelUID channelUID;
++        private String description;
++        private String channelType;
++        private String itemType;
++
++        /**
++         * Constructs the base channel from a id, description. channel type and item type.
++         *
++         * @param id
++         * @param description
++         * @param channelType
++         */
++        protected BaseBalboaChannel(String id, String description, String channelType, String itemType) {
++            this.channelUID = new ChannelUID(thing.getUID(), id);
++            this.description = description;
++            this.channelType = channelType;
++            this.itemType = itemType;
++        }
++
++        /**
++         * Returns the Channel UID.
++         */
++        @Override
++        public ChannelUID getChannelUID() {
++            return channelUID;
++        }
++
++        /**
++         * Builds the channel.
++         */
++        @Override
++        public Channel getChannel() {
++            ChannelBuilder builder = ChannelBuilder.create(channelUID, itemType).withLabel(description)
++                    .withDescription(description)
++                    .withType(new ChannelTypeUID(BalboaBindingConstants.BINDING_ID, channelType));
++            return builder.build();
++        }
++    }
++
++    /**
++     * Handles contact items
++     *
++     * @author Carl Önnheim
++     *
++     */
++    private class ContactChannel extends BaseBalboaChannel {
++        private ItemType balboaItemType;
++
++        /**
++         * Instantiate a contact item for the given {@link ItemType}.
++         *
++         */
++        protected ContactChannel(ItemType balboaItemType, String id, String description, String channelType) {
++            super(id, description, channelType, "Contact");
++            this.balboaItemType = balboaItemType;
++        }
++
++        /**
++         * Updates will have no effect. The channels are read-on so should never happen in practise
++         *
++         */
++        @Override
++        public void handleCommand(Command command) {
++            if (command instanceof RefreshType) {
++                // Status is sent continuously by the protocol, no action is needed.
++            } else {
++                logger.warn("Contact channel received update of type {}", command.getClass().getSimpleName());
++            }
++        }
++
++        /**
++         * Updates the channel state from status update messages.
++         *
++         */
++        @Override
++        public void handleUpdate(BalboaMessage message) {
++            // Only status update messages are of interest
++            if (message instanceof BalboaMessage.StatusUpdateMessage) {
++                // Get the raw state of the item.
++                byte rawState = ((BalboaMessage.StatusUpdateMessage) message).getItem(balboaItemType, 0);
++                // Make the update
++                updateState(getChannelUID(), rawState == 0 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
++            }
++        }
++    }
++
++    /**
++     * Handles One-Speed toggle items
++     *
++     * @author CarlÖnnheim
++     *
++     */
++    private class OneSpeedToggle extends BaseBalboaChannel {
++        private int index;
++        private ItemType balboaItemType;
++        private OnOffType state = OnOffType.OFF;
++
++        /**
++         * Instantiate a one-speed toggle item.
++         *
++         * @param index
++         */
++        protected OneSpeedToggle(ItemType balboaItemType, int index, String id, String description,
++                String channelType) {
++            super(id, description, channelType, "Switch");
++
++            // Sanity check the index
++            if (index < 0 || index >= balboaItemType.count) {
++                throw new IllegalArgumentException("Index out of bounds");
++            }
++
++            this.balboaItemType = balboaItemType;
++            this.index = index;
++        }
++
++        /**
++         * Set the item to the desired state (ON/OFF)
++         */
++        @Override
++        public void handleCommand(Command command) {
++            // Send a toggle if the desired state is not equal to the current state
++            if (command instanceof OnOffType) {
++                if (command != state) {
++                    protocol.sendMessage(new BalboaMessage.ToggleMessage(balboaItemType, index));
++                }
++            } else if (command instanceof RefreshType) {
++                // Status is sent continuously by the protocol, no action is needed.
++            } else {
++                logger.warn("One-speed channel received update of type {}", command.getClass().getSimpleName());
++            }
++        }
++
++        /**
++         * Updates the channel state from status update messages.
++         */
++        @Override
++        public void handleUpdate(BalboaMessage message) {
++            // Only status update messages are of interest
++            if (message instanceof BalboaMessage.StatusUpdateMessage) {
++                // Get the raw state of the item and determine the OH state.
++                byte rawState = ((BalboaMessage.StatusUpdateMessage) message).getItem(balboaItemType, index);
++                state = rawState == 0 ? OnOffType.OFF : OnOffType.ON;
++                // Make the update
++                updateState(getChannelUID(), state);
++            }
++        }
++    }
++
++    /**
++     * Handles Two-Speed toggle items
++     *
++     * @author CarlÖnnheim
++     *
++     */
++    private class TwoSpeedToggle extends BaseBalboaChannel {
++        private int index;
++        private ItemType balboaItemType;
++        private byte rawState;
++
++        /**
++         * Instantiate a two-speed toggle item.
++         *
++         * @param index
++         */
++        protected TwoSpeedToggle(ItemType balboaItemType, int index, String id, String description,
++                String channelType) {
++            super(id, description, channelType, "String");
++
++            // Sanity check the index
++            if (index < 0 || index >= balboaItemType.count) {
++                throw new IllegalArgumentException("Index out of bounds");
++            }
++
++            this.balboaItemType = balboaItemType;
++            this.index = index;
++        }
++
++        /**
++         * Set the item to the desired state
++         */
++        @Override
++        public void handleCommand(Command command) {
++            if (command instanceof StringType) {
++                // Determine how many times to switch (state wraps around 0 -> 1 -> 2 -> 0)
++                int count = 0;
++                switch (command.toString()) {
++                    case "OFF":
++                        count = Math.floorMod(0 - rawState, 3);
++                        break;
++                    case "LOW":
++                        count = Math.floorMod(1 - rawState, 3);
++                        break;
++                    case "HIGH":
++                        count = Math.floorMod(2 - rawState, 3);
++                        break;
++                    default:
++                        // Unknown target state, do nothing
++                        count = 0;
++                        break;
++                }
++                // Toggle that many times
++                for (int i = 0; i < count; i++) {
++                    protocol.sendMessage(new BalboaMessage.ToggleMessage(balboaItemType, index));
++                }
++            } else if (command instanceof RefreshType) {
++                // Status is sent continuously by the protocol, no action is needed.
++            } else {
++                logger.warn("Two-speed channel received update of type {}", command.getClass().getSimpleName());
++            }
++        }
++
++        /**
++         * Updates the channel state from status update messages.
++         */
++        @Override
++        public void handleUpdate(BalboaMessage message) {
++            // Only status update messages are of interest
++            if (message instanceof BalboaMessage.StatusUpdateMessage) {
++                // Get the raw state of the item and determine the OH state.
++                rawState = ((BalboaMessage.StatusUpdateMessage) message).getItem(balboaItemType, index);
++                StringType state = StringType.EMPTY;
++                switch (rawState) {
++                    case 0x00:
++                        state = StringType.valueOf("OFF");
++                        break;
++                    case 0x01:
++                        state = StringType.valueOf("LOW");
++                        break;
++                    case 0x02:
++                        state = StringType.valueOf("HIGH");
++                        break;
++                }
++                // Make the update
++                updateState(getChannelUID(), state);
++            }
++        }
++    }
++
++    /**
++     * Handles the Heat Mode
++     *
++     * @author Carl Önnheim
++     *
++     */
++    private class HeatMode extends BaseBalboaChannel {
++        private byte rawState;
++
++        /**
++         * Instantiate a heat mode item.
++         *
++         * @param index
++         */
++        protected HeatMode() {
++            super("heat-mode", "Heat Mode", "heat-mode", "String");
++        }
++
++        /**
++         * Set the item to the desired state
++         */
++        @Override
++        public void handleCommand(Command command) {
++            // Send a toggle if the desired state is not equal to the current state
++            if (command instanceof StringType) {
++                // Switch based on where the user wants to go
++                switch (command.toString()) {
++                    case "READY":
++                        // We need to toggle if the first bit is set (REST or READY_IN_REST)
++                        if ((rawState & 0x01) != 0) {
++                            protocol.sendMessage(new BalboaMessage.ToggleMessage(ItemType.HEAT_MODE, 0));
++                        }
++                        break;
++                    case "REST":
++                    case "READY_IN_REST":
++                        // We need to toggle if the first bit is not set (READY)
++                        if ((rawState & 0x01) == 0) {
++                            protocol.sendMessage(new BalboaMessage.ToggleMessage(ItemType.HEAT_MODE, 0));
++                        }
++                        break;
++                }
++            } else if (command instanceof RefreshType) {
++                // Status is sent continuously by the protocol, no action is needed.
++            } else {
++                logger.warn("Heat Mode channel received update of type {}", command.getClass().getSimpleName());
++            }
++        }
++
++        /**
++         * Updates the channel state from status update messages.
++         */
++        @Override
++        public void handleUpdate(BalboaMessage message) {
++            // Only status update messages are of interest
++            if (message instanceof BalboaMessage.StatusUpdateMessage) {
++                // Get the raw state of the item and determine the OH state.
++                rawState = ((BalboaMessage.StatusUpdateMessage) message).getReadyState();
++                StringType state = StringType.EMPTY;
++                switch (rawState) {
++                    case 0x00:
++                        state = StringType.valueOf("READY");
++                        break;
++                    case 0x01:
++                        state = StringType.valueOf("REST");
++                        break;
++                    case 0x03:
++                        state = StringType.valueOf("READY_IN_REST");
++                        break;
++                }
++                // Make the update
++                updateState(getChannelUID(), state);
++            }
++        }
++    }
++
++    /**
++     * Handles the Temperature Scale
++     *
++     * @author Carl Önnheim
++     *
++     */
++    private class TemperatureScale extends BaseBalboaChannel {
++
++        /**
++         * Instantiate a temperature scale item.
++         *
++         * @param index
++         */
++        protected TemperatureScale() {
++            super("temperature-scale", "Temperature Scale", "temperature-scale", "String");
++        }
++
++        /**
++         * Set the item to the desired state
++         */
++        @Override
++        public void handleCommand(Command command) {
++            // Set the desired temperature scale
++            if (command instanceof StringType) {
++                switch (command.toString()) {
++                    case "C":
++                        protocol.sendMessage(new BalboaMessage.SetTemperatureScaleMessage(true));
++                        break;
++                    case "F":
++                        protocol.sendMessage(new BalboaMessage.SetTemperatureScaleMessage(false));
++                        break;
++                }
++            } else if (command instanceof RefreshType) {
++                // Status is sent continuously by the protocol, no action is needed.
++            } else {
++                logger.warn("Temperature Scale channel received update of type {}", command.getClass().getSimpleName());
++            }
++        }
++
++        /**
++         * Updates the channel state from status update messages.
++         */
++        @Override
++        public void handleUpdate(BalboaMessage message) {
++            // Only status update messages are of interest
++            if (message instanceof BalboaMessage.StatusUpdateMessage) {
++                // Remember the state at handler level, since it is needed when setting the target temperature.
++                celciusDisplay = ((BalboaMessage.StatusUpdateMessage) message).getCelciusDisplay();
++                // Make the update
++                updateState(getChannelUID(), celciusDisplay ? StringType.valueOf("C") : StringType.valueOf("F"));
++            }
++        }
++    }
++
++    /**
++     * Handles the Temperature Range
++     *
++     * @author Carl Önnheim
++     *
++     */
++    private class TemperatureRange extends BaseBalboaChannel {
++
++        /**
++         * Instantiate a temperature range item.
++         *
++         * @param index
++         */
++        protected TemperatureRange() {
++            super("temperature-range", "Temperature Range", "temperature-range", "String");
++        }
++
++        /**
++         * Set the temperature range to the desired state
++         */
++        @Override
++        public void handleCommand(Command command) {
++            // Set the desired temperature range
++            if (command instanceof StringType) {
++                // Toggle if we are not already at the desired state
++                switch (command.toString()) {
++                    case "LOW":
++                        if (temperatureHighRange) {
++                            protocol.sendMessage(new BalboaMessage.ToggleMessage(ItemType.TEMPERATURE_RANGE, 0));
++                        }
++                        break;
++                    case "HIGH":
++                        if (!temperatureHighRange) {
++                            protocol.sendMessage(new BalboaMessage.ToggleMessage(ItemType.TEMPERATURE_RANGE, 0));
++                        }
++                        break;
++                }
++            } else if (command instanceof RefreshType) {
++                // Status is sent continuously by the protocol, no action is needed.
++            } else {
++                logger.warn("Temperature Range channel received update of type {}", command.getClass().getSimpleName());
++            }
++        }
++
++        /**
++         * Updates the channel state from status update messages.
++         */
++        @Override
++        public void handleUpdate(BalboaMessage message) {
++            // Only status update messages are of interest
++            if (message instanceof BalboaMessage.StatusUpdateMessage) {
++                // Remember the state at handler level, since it is needed when setting the target temperature.
++                temperatureHighRange = ((BalboaMessage.StatusUpdateMessage) message).getItem(ItemType.TEMPERATURE_RANGE,
++                        0) != 0x00;
++                // Make the update
++                updateState(getChannelUID(),
++                        temperatureHighRange ? StringType.valueOf("HIGH") : StringType.valueOf("LOW"));
++            }
++        }
++    }
++
++    /**
++     * Handles the Temperatures (current temperature and target temperature)
++     *
++     * @author Carl Önnheim
++     *
++     */
++    private class TemperatureChannel extends BaseBalboaChannel {
++
++        private boolean isTarget;
++
++        /**
++         * Instantiate a Temperature item.
++         *
++         */
++        protected TemperatureChannel(String id, String description, boolean isTarget) {
++            super(id, description, isTarget ? "target-temperature" : "current-temperature", "Number:Temperature");
++            this.isTarget = isTarget;
++        }
++
++        /**
++         * Sets the target temperature (current temperature is read only)
++         */
++        @Override
++        public void handleCommand(Command command) {
++            // Only Quantity Type commands are allowed and only the target temperature is writable
++            if (command instanceof QuantityType<?> && isTarget) {
++                // Convert to the temperature unit used on the balboa unit
++                QuantityType<?> target = (QuantityType<?>) command;
++                if (celciusDisplay) {
++                    target = target.toUnit(SIUnits.CELSIUS);
++                } else {
++                    target = target.toUnit(ImperialUnits.FAHRENHEIT);
++                }
++                // Set the target temperature if the conversion was successful
++                if (target != null) {
++                    protocol.sendMessage(new BalboaMessage.SetTemperatureMessage(target.doubleValue(), celciusDisplay,
++                            temperatureHighRange));
++                }
++            } else if (command instanceof RefreshType) {
++                // Status is sent continuously by the protocol, no action is needed.
++            } else {
++                logger.warn("{} received update of type {}", this.getChannelUID().getId(),
++                        command.getClass().getSimpleName());
++            }
++        }
++
++        /**
++         * Updates the channel state from status update messages.
++         */
++        @Override
++        public void handleUpdate(BalboaMessage message) {
++            // Only status update messages are of interest
++            if (message instanceof BalboaMessage.StatusUpdateMessage) {
++                // Get the raw state
++                double rawState = ((BalboaMessage.StatusUpdateMessage) message).getTemperature(isTarget);
++                // The unit reports negative numbers if the temperature measurement is unreliable (0xFF which casts to
++                // -1.0 double). We discard these altogether.
++                if (rawState < 0) {
++                    return;
++                }
++                // Set the proper unit of the value. Get the scale from the message, not the handlers state, since
++                // TemperatureScale handler is not necessarily called first.
++                QuantityType<Temperature> state;
++                if (((BalboaMessage.StatusUpdateMessage) message).getCelciusDisplay()) {
++                    state = new QuantityType<Temperature>(rawState, SIUnits.CELSIUS);
++                } else {
++                    state = new QuantityType<Temperature>(rawState, ImperialUnits.FAHRENHEIT);
++                }
++                // Make the update
++                updateState(getChannelUID(), state);
++            }
++        }
++    }
++
++    /**
++     * Handles the Filter Status
++     *
++     * @author Carl Önnheim
++     *
++     */
++    private class FilterStatus extends BaseBalboaChannel {
++
++        /**
++         * Instantiate a Filter status item.
++         *
++         */
++        protected FilterStatus() {
++            super("filter", "Filter Status", "filter", "String");
++        }
++
++        /**
++         * The channel is read only, no action will be taken.
++         */
++        @Override
++        public void handleCommand(Command command) {
++            if (command instanceof RefreshType) {
++                // Status is sent continuously by the protocol, no action is needed.
++            } else {
++                logger.warn("Filter Status channel received update of type {}", command.getClass().getSimpleName());
++            }
++        }
++
++        /**
++         * Updates the channel state from status update messages.
++         */
++        @Override
++        public void handleUpdate(BalboaMessage message) {
++            // Only status update messages are of interest
++            if (message instanceof BalboaMessage.StatusUpdateMessage) {
++                // Determine state
++                StringType state = StringType.EMPTY;
++                switch (((BalboaMessage.StatusUpdateMessage) message).getFilterState()) {
++                    case 0x01:
++                        state = StringType.valueOf("1");
++                        break;
++                    case 0x02:
++                        state = StringType.valueOf("2");
++                        break;
++                    case 0x03:
++                        state = StringType.valueOf("1+2");
++                        break;
++                    default:
++                        state = StringType.valueOf("OFF");
++                        break;
++                }
++                // Make the update
++                updateState(getChannelUID(), state);
++            }
++        }
++    }
++}
+diff --git a/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaHandlerFactory.java b/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaHandlerFactory.java
+new file mode 100644
+index 00000000..b725348a
+--- /dev/null
++++ b/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaHandlerFactory.java
+@@ -0,0 +1,56 @@
++/**
++ * Copyright (c) 2010-2020 Contributors to the openHAB project
++ *
++ * See the NOTICE file(s) distributed with this work for additional
++ * information.
++ *
++ * This program and the accompanying materials are made available under the
++ * terms of the Eclipse Public License 2.0 which is available at
++ * http://www.eclipse.org/legal/epl-2.0
++ *
++ * SPDX-License-Identifier: EPL-2.0
++ */
++package org.openhab.binding.balboa.internal;
++
++import static org.openhab.binding.balboa.internal.BalboaBindingConstants.THING_TYPE_BALBOA_IP;
++
++import java.util.Collections;
++import java.util.Set;
++
++import org.eclipse.jdt.annotation.NonNullByDefault;
++import org.eclipse.jdt.annotation.Nullable;
++import org.openhab.core.thing.Thing;
++import org.openhab.core.thing.ThingTypeUID;
++import org.openhab.core.thing.binding.BaseThingHandlerFactory;
++import org.openhab.core.thing.binding.ThingHandler;
++import org.openhab.core.thing.binding.ThingHandlerFactory;
++import org.osgi.service.component.annotations.Component;
++
++/**
++ * The {@link BalboaHandlerFactory} is responsible for creating things and thing
++ * handlers.
++ *
++ * @author Carl Önnheim - Initial contribution
++ */
++@NonNullByDefault
++@Component(configurationPid = "binding.balboa", service = ThingHandlerFactory.class)
++public class BalboaHandlerFactory extends BaseThingHandlerFactory {
++
++    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.singleton(THING_TYPE_BALBOA_IP);
++
++    @Override
++    public boolean supportsThingType(ThingTypeUID thingTypeUID) {
++        return SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
++    }
++
++    @Override
++    protected @Nullable ThingHandler createHandler(Thing thing) {
++        ThingTypeUID thingTypeUID = thing.getThingTypeUID();
++
++        if (THING_TYPE_BALBOA_IP.equals(thingTypeUID)) {
++            return new BalboaHandler(thing);
++        }
++
++        return null;
++    }
++}
+diff --git a/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaMessage.java b/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaMessage.java
+new file mode 100644
+index 00000000..33d1cb50
+--- /dev/null
++++ b/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaMessage.java
+@@ -0,0 +1,891 @@
++/**
++ * Copyright (c) 2010-2020 Contributors to the openHAB project
++ *
++ * See the NOTICE file(s) distributed with this work for additional
++ * information.
++ *
++ * This program and the accompanying materials are made available under the
++ * terms of the Eclipse Public License 2.0 which is available at
++ * http://www.eclipse.org/legal/epl-2.0
++ *
++ * SPDX-License-Identifier: EPL-2.0
++ */
++package org.openhab.binding.balboa.internal;
++
++import java.util.HashMap;
++
++import javax.xml.bind.DatatypeConverter;
++
++import org.eclipse.jdt.annotation.NonNullByDefault;
++import org.eclipse.jdt.annotation.Nullable;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++
++/**
++ * The {@link BalboaMessage} represents the messages exchanged with a Balboa Control Unit.
++ *
++ * @author Carl Önnheim - Initial contribution
++ */
++@NonNullByDefault
++public class BalboaMessage {
++
++    private static final Logger logger = LoggerFactory.getLogger(BalboaMessage.class);
++
++    // Each subclass will override these
++    public static final int MESSAGE_TYPE = 0;
++    public static final int MESSAGE_LENGTH = 0;
++
++    // Message type map
++    private static HashMap<Integer, Class<? extends BalboaMessage>> messageTypeMap = new HashMap<Integer, Class<? extends BalboaMessage>>();
++
++    // Inititalize message type map
++    static {
++        messageTypeMap.put(StatusUpdateMessage.MESSAGE_TYPE, StatusUpdateMessage.class);
++        messageTypeMap.put(InformationResponseMessage.MESSAGE_TYPE, InformationResponseMessage.class);
++        messageTypeMap.put(PanelConfigurationResponseMessage.MESSAGE_TYPE, PanelConfigurationResponseMessage.class);
++    }
++
++    /**
++     * The {@link ItemType} enumerates the items that can be read and potentially also toggled.
++     *
++     * @author CarlÖnnheim
++     *
++     */
++    public enum ItemType {
++        // @formatter:off
++        PUMP             ((byte) 0x04, BalboaProtocol.MAX_PUMPS),
++        LIGHT            ((byte) 0x11, BalboaProtocol.MAX_LIGHTS),
++        AUX              ((byte) 0x16, BalboaProtocol.MAX_AUX),
++        BLOWER           ((byte) 0x0c, 1),
++        MISTER           ((byte) 0x0e, 1),
++        TEMPERATURE_RANGE((byte) 0x50, 1),
++        HEAT_MODE        ((byte) 0x51, 1),
++        HOLD_MODE        ((byte) 0x3C, 1),
++        // Read only (address is zero)
++        PRIMING          ((byte) 0x00, 1),
++        HEATER           ((byte) 0x00, 1),
++        CIRCULATION      ((byte) 0x00, 1);
++        // @formatter:on
++
++        private final byte address;
++        public final int count;
++
++        private ItemType(byte address, int count) {
++            this.address = address;
++            this.count = count;
++        }
++    }
++
++    /*
++     * Messages implement the following interfaces to identify their capabilities (inbound and/or outbound)
++     *
++     */
++
++    /**
++     * All messages provide a message type code
++     *
++     * @author CarlÖnnheim
++     *
++     */
++    static private interface Message {
++        public int getMessageType();
++    }
++
++    /**
++     * Messages which can be sent to the unit implement this interface.
++     *
++     * @author CarlÖnnheim
++     *
++     */
++    static protected interface Outbound extends Message {
++        /**
++         * Provides the payload of the message instance.
++         *
++         * @return byte buffer containing the payload
++         */
++        public byte[] getPayload();
++    }
++
++    /**
++     * Messages which can be received from the unit implement this interface.
++     *
++     * @author Carl Önnheim
++     *
++     */
++    static protected interface Inbound extends Message {
++    }
++
++    /*
++     * Implementation of outbound messages
++     */
++
++    /**
++     * The {@link ConfigurationRequestMessage} messages are sent to query the device for its configuration.
++     *
++     * @author Carl Önnheim - Initial contribution
++     */
++    static public class ConfigurationRequestMessage extends BalboaMessage implements BalboaMessage.Outbound {
++        public static final int MESSAGE_TYPE = 0x0abf04;
++        static final byte[] payload = new byte[0];
++
++        /**
++         * Payload is empty for this message
++         */
++        @Override
++        public byte[] getPayload() {
++            return payload;
++        }
++    }
++
++    /**
++     * The {@link SettingsRequestMessage} messages are sent to query the device for its settings.
++     *
++     * @author Carl Önnheim - Initial contribution
++     */
++    static public class SettingsRequestMessage extends BalboaMessage implements BalboaMessage.Outbound {
++        public static final int MESSAGE_TYPE = 0x0abf22;
++
++        /**
++         * Enumerates the differnt types of settings that can be requested
++         *
++         * @author CarlÖnnheim
++         *
++         */
++        public enum SettingsType {
++            // @formatter:off
++            PANEL        (new byte[] { (byte) 0x00, (byte) 0x00, (byte) 0x01 }),
++            FILTER_CYCLES(new byte[] { (byte) 0x01, (byte) 0x00, (byte) 0x00 }),
++            INFORMATION  (new byte[] { (byte) 0x02, (byte) 0x00, (byte) 0x00 }),
++            PREFERENCES  (new byte[] { (byte) 0x08, (byte) 0x00, (byte) 0x00 }),
++            // When called with Fault Log, grab the last entry.
++            FAULT_LOG    (new byte[] { (byte) 0x20, (byte) 0xFF, (byte) 0x00 });
++            // @formatter:on
++
++            private final byte[] payload;
++
++            private SettingsType(byte[] payload) {
++                this.payload = payload;
++            }
++        }
++
++        private SettingsType setting;
++
++        /**
++         * Construct a {@link SettingsRequestMessage} for the given {@link SettingsType}.
++         *
++         * @param setting the {@link SettingsType} to request.
++         */
++        public SettingsRequestMessage(SettingsType setting) {
++            this.setting = setting;
++        }
++
++        /**
++         * Payload is static given the settings type
++         */
++        @Override
++        public byte[] getPayload() {
++            return setting.payload;
++        }
++    }
++
++    /**
++     * The {@link ToggleMessage} messages are sent to alter the state of the balboa unit.
++     *
++     * @author Carl Önnheim - Initial contribution
++     */
++    static public class ToggleMessage extends BalboaMessage implements BalboaMessage.Outbound {
++        public static final int MESSAGE_TYPE = 0x0abf11;
++        private ItemType type;
++        private int index;
++
++        /**
++         * Construct a {@link ToggleMessage} for the given ToggleType and index.
++         *
++         * @param type the ToggleMessage to create a message for.
++         * @param index the index to create a message for.
++         */
++        public ToggleMessage(ItemType type, int index) {
++            // Make sure we are not trying to toggle a read only state
++            if (type.address == 0x00) {
++                throw new IllegalArgumentException("Attempt to toggle a read only state");
++            }
++            // Make sure the index does not go out of bounds
++            if (index < 0 || index >= type.count) {
++                throw new IllegalArgumentException("Index out of bounds");
++            }
++            this.type = type;
++            this.index = index;
++        }
++
++        /**
++         * Provide the payload. First byte is the item address + index, second byte is always zero
++         */
++        @Override
++        public byte[] getPayload() {
++            return new byte[] { (byte) (type.address + index), (byte) 0x00 };
++        }
++    }
++
++    /**
++     * The {@link SetTemperatureMessage} messages are sent to change the target temperature of the balboa unit.
++     *
++     * @author Carl Önnheim - Initial contribution
++     */
++    static public class SetTemperatureMessage extends BalboaMessage implements BalboaMessage.Outbound {
++        public static final int MESSAGE_TYPE = 0x0abf20;
++        private byte targetTemperature;
++
++        /**
++         * Construct a {@link SetTemperatureMessage} for the given temperature.
++         *
++         * @param targetTemperature The temperature to set
++         * @param celcius Indicates if the temperature is expressed in celcius (otherwise fahrenheit). Note that this
++         *            must match the current display setting on the unit.
++         * @param highRange Indicates if the temperature is in the high range (otherwise low range)
++         */
++        public SetTemperatureMessage(double targetTemperature, boolean celcius, boolean highRange) {
++            // The limits and multiplier
++            double low, high, multiplier;
++            if (celcius) {
++                multiplier = 2;
++                if (highRange) {
++                    low = 26.5;
++                    high = 40;
++                } else {
++                    low = 10;
++                    high = 26;
++                }
++            } else {
++                multiplier = 1;
++                if (highRange) {
++                    low = 79;
++                    high = 104;
++                } else {
++                    low = 50;
++                    high = 80;
++                }
++            }
++
++            // Set the temperature
++            if (targetTemperature < low) {
++                this.targetTemperature = (byte) (low * multiplier);
++            } else if (targetTemperature > high) {
++                this.targetTemperature = (byte) (high * multiplier);
++            } else {
++                this.targetTemperature = (byte) (targetTemperature * multiplier);
++            }
++        }
++
++        /**
++         * Provide the payload. One byte with the temperature
++         */
++        @Override
++        public byte[] getPayload() {
++            return new byte[] { targetTemperature };
++        }
++    }
++
++    /**
++     * The {@link SetTemperatureScaleMessage} messages are sent to set the temperature scale of the balboa unit.
++     *
++     * @author Carl Önnheim - Initial contribution
++     */
++    static public class SetTemperatureScaleMessage extends BalboaMessage implements BalboaMessage.Outbound {
++        public static final int MESSAGE_TYPE = 0x0abf27;
++        private byte scale;
++
++        /**
++         * Construct a {@link SetTemperatureScaleMessage}.
++         *
++         * @param celcius Indicates if the temperature whall be expressed in celcius (otherwise fahrenheit)
++         *
++         */
++        public SetTemperatureScaleMessage(boolean celcius) {
++            scale = (byte) (celcius ? 0x01 : 0x00);
++        }
++
++        /**
++         * Provide the payload. 0x01 followed by the desired scale
++         */
++        @Override
++        public byte[] getPayload() {
++            return new byte[] { (byte) 0x01, scale };
++        }
++    }
++
++    /**
++     * The {@link SetTimeMessage} messages are sent to set the time of the balboa unit.
++     *
++     * @author Carl Önnheim - Initial contribution
++     */
++    static public class SetTimeMessage extends BalboaMessage implements BalboaMessage.Outbound {
++        public static final int MESSAGE_TYPE = 0x0abf21;
++        private byte hour;
++        private byte minute;
++
++        /**
++         * Construct a {@link SetTimeMessage}.
++         *
++         * @param hour The hour - always in 24h format
++         * @param minute The minute
++         * @param display24h Show time in 24h format
++         *
++         */
++        public SetTimeMessage(int hour, int minute, boolean display24h) {
++            // Store the hour
++            if (hour < 0) {
++                this.hour = 0;
++            } else if (hour > 23) {
++                this.hour = 23;
++            } else {
++                this.hour = (byte) hour;
++            }
++
++            // Store the minute
++            if (minute < 0) {
++                this.minute = 0;
++            } else if (minute > 59) {
++                this.minute = 59;
++            } else {
++                this.minute = (byte) minute;
++            }
++
++            // Set the high bit if using 24h time
++            if (display24h) {
++                this.hour |= 0x80;
++            }
++        }
++
++        /**
++         * Provide the payload. Hour followed by minute
++         */
++        @Override
++        public byte[] getPayload() {
++            return new byte[] { hour, minute };
++        }
++    }
++
++    /*
++     * Implementation of inbound messages. Each is expected to have a constructor taking a raw message buffer as its
++     * only parameter.
++     */
++
++    /**
++     * The {@link StatusUpdateMessage} messages are sent repeatedly by the control unit.
++     *
++     * @author Carl Önnheim - Initial contribution
++     */
++    static public class StatusUpdateMessage extends BalboaMessage implements BalboaMessage.Inbound {
++        public static final int MESSAGE_TYPE = 0xffaf13;
++        public static final int MESSAGE_LENGTH = 30;
++
++        private byte[] pumps = new byte[BalboaProtocol.MAX_PUMPS];
++        private byte[] lights = new byte[BalboaProtocol.MAX_LIGHTS];
++        private byte blower;
++        private boolean[] aux = new boolean[BalboaProtocol.MAX_AUX];
++        private boolean celcius, time24h, temperatureHighRange, priming, mister, circulation;
++        byte timeHour, timeMinute;
++        double currentTemperature, targetTemperature;
++        byte readyState, heatState, filterState;
++
++        /**
++         * Instantiates a {@link StatusUpdateMessage} from a raw data buffer
++         *
++         * @param buffer The raw data buffer to parse the message from
++         */
++        public StatusUpdateMessage(byte[] buffer) {
++            // Marks which bits are used so changes on the unknown bits can be traced
++            // @formatter:off
++            final byte[] unknown = {
++                    //     0                  1                  2                  3                  4                  5                  6                  7
++                    (byte) 0b00000000, (byte) 0b00000000, (byte) 0b00000000, (byte) 0b00000000, (byte) 0b00000000, (byte) 0b11111111, (byte) 0b11111110, (byte) 0b00000000,
++                    //     8                  9                  10                 11                 12                 13                 14                 15
++                    (byte) 0b00000000, (byte) 0b00000000, (byte) 0b11111100, (byte) 0b11111111, (byte) 0b11111111, (byte) 0b11111111, (byte) 0b11110000, (byte) 0b11001011,
++                    //     16                 17                 18                 19                 20                 21                 22                 23
++                    (byte) 0b00000000, (byte) 0b00111100, (byte) 0b11110001, (byte) 0b11110000, (byte) 0b11100110, (byte) 0b11111111, (byte) 0b11111111, (byte) 0b11111111,
++                    //     24                 25                 26                 27                 28                 29                 30                 31
++                    (byte) 0b11111111, (byte) 0b00000000, (byte) 0b11111111, (byte) 0b11111111, (byte) 0b11111111, (byte) 0b11111111, (byte) 0b11111111, (byte) 0b11111111,
++                    //     32,                33
++                    (byte) 0b00000000, (byte) 0b00000000
++                    };
++            // @formatter:on
++
++            // Determine the temperature scale first (cannot come in byte order since used on other items)
++            celcius = (buffer[14] & 0x01) != 0;
++
++            // Byte 0: start mark
++            // Byte 1: length
++            // Byte 2-4: message type
++            // Byte 5: hold mode in 0x05?
++            // Byte 6: Bit 0: priming
++            priming = (buffer[6] & 0x01) != 0;
++            // Byte 7: Current Temperature
++            currentTemperature = buffer[7] * (celcius ? 0.5 : 1.0);
++            // Byte 8: Time Hour
++            timeHour = buffer[8];
++            // Byte 9: Time Minute
++            timeMinute = buffer[9];
++            // Byte 10: Bits 0 and 1: Ready State (0 = Ready, 1 = Rest, 3 = Ready in rest)
++            readyState = (byte) (buffer[10] & 0x03);
++            // Byte 11: unknown
++            // Byte 12: unknown
++            // Byte 13: unknown
++            // Byte 14: Bit 0: Celcius (otherwise Fahrenheit - determined above), 1: 24h-clock, 2-3: Filter Mode
++            time24h = (buffer[14] & 0x02) != 0;
++            filterState = (byte) ((buffer[14] >> 2) & 0x03);
++            // Byte 15: Bit 0-1: unknown, 2: high range (otherwise low range), 3: unknown,
++            // 4-5: heatState (off, low, high, ??), 6-7: unknown
++            temperatureHighRange = (buffer[15] & 0x04) != 0;
++            heatState = (byte) ((buffer[15] >> 4) & 0x03);
++            // Byte 16-17: Pump states. 2 bits per pump like so: P3P2P1P0 P5xxxxP4 (Byte16 Byte17).
++            // Each encodes off,low,high,??. 1-speed pumps only off and on.
++            for (int i = 0; i < BalboaProtocol.MAX_PUMPS; i++) {
++                // The bit shift goes 0, 2, 4, 6, 0, 6
++                int bit = (i % 4) * 2;
++                if (i == 5) {
++                    bit = 6;
++                }
++                pumps[i] = (byte) ((buffer[16 + i / 4] >> bit) & 0x03);
++            }
++            // Byte 18: Bit 0 unknown, Bit 1 circulation, Bits 2-3 blower (off, low, medium, high?)
++            circulation = (buffer[18] & 0x02) != 0;
++            blower = (byte) ((buffer[18] >> 2) & 0x03);
++            // Byte 19: Lights like so xxxxL1L0. (off, low, medium, high)
++            for (int i = 0; i < BalboaProtocol.MAX_LIGHTS; i++) {
++                lights[i] = (byte) ((buffer[19] >> (i * 2)) & 0x03);
++            }
++            // Byte 20: Bit 0: mister, bit 1-2: unkown, bit 3-4: aux1/2: bit 5-7: unknown
++            mister = (buffer[20] & 0x01) != 0;
++            for (int i = 0; i < BalboaProtocol.MAX_AUX; i++) {
++                aux[i] = (buffer[20] & (0x08 << i)) != 0;
++            }
++            // Byte 21: unknown
++            // Byte 22: unknown
++            // Byte 23: unknown
++            // Byte 24: unknown
++            // Byte 25: target temperature
++            targetTemperature = buffer[25] * (celcius ? 0.5 : 1.0);
++            // Byte 26: unknown
++            // Byte 27: unknown
++            // Byte 28: unknown -- Note that earlier message versions may be shorter (crc and end mark shifts up)
++            // Byte 29: unknown -- Note that earlier message versions may be shorter (crc and end mark shifts up)
++            // Byte 30: unknown -- Note that earlier message versions may be shorter (crc and end mark shifts up)
++            // Byte 31: unknown -- Note that earlier message versions may be shorter (crc and end mark shifts up)
++            // Byte 32: crc
++            // Byte 33: end mark
++
++            // @formatter:off
++            logger.trace(
++                    "Status update received {}:{}"
++                            + "\n"
++                            + "\nPRI: {}\tCEL: {}\t24H: {}\tHGH: {}\tMIS: {}\tCIR: {}"
++                            + "\nBLW: {}\t\tRST: {}\t\tFIL: {}\t\tHEA: {}"
++                            + "\nCUR: {}\tTGT: {}"
++                            + "\n"
++                            + "\nPUM: {}"
++                            + "\nLGT: {}"
++                            + "\nAUX: {}"
++                            + "\n",
++                    timeHour, timeMinute
++                    , priming, celcius, time24h, temperatureHighRange, mister, circulation
++                    , blower, readyState, filterState, heatState
++                    , currentTemperature, targetTemperature
++                    , pumps
++                    , lights
++                    , aux);
++            // @formatter:on
++
++            // Trace changes on unknown bits
++            displayUnknownBits(buffer, unknown);
++        }
++
++        /**
++         * Returns the state of a one- or two-state togglable item.
++         *
++         * @param item type of the togglable.
++         * @param index the index to return (PUMP, AUX and LIGHTS)
++         * @return
++         */
++        public byte getItem(ItemType item, int index) {
++
++            switch (item) {
++                case PUMP:
++                    if (index < 0 || index > BalboaProtocol.MAX_PUMPS) {
++                        return 0;
++                    } else {
++                        return pumps[index];
++                    }
++                case AUX:
++                    if (index < 0 || index > BalboaProtocol.MAX_AUX) {
++                        return 0;
++                    } else {
++                        return (byte) (aux[index] ? 0x01 : 0x00);
++                    }
++                case LIGHT:
++                    if (index < 0 || index > BalboaProtocol.MAX_LIGHTS) {
++                        return 0;
++                    } else {
++                        return lights[index];
++                    }
++                case BLOWER:
++                    return blower;
++                case MISTER:
++                    return (byte) (mister ? 0x01 : 0x00);
++                case TEMPERATURE_RANGE:
++                    return (byte) (temperatureHighRange ? 0x01 : 0x00);
++                case CIRCULATION:
++                    return (byte) (circulation ? 0x01 : 0x00);
++                case HEATER:
++                    return heatState;
++                case PRIMING:
++                    return (byte) (priming ? 0x01 : 0x00);
++
++                // TODO: Understand what these signify and how to handle them.
++                case HEAT_MODE:
++                    return 0;
++                case HOLD_MODE:
++                    return 0;
++                default:
++                    return 0;
++            }
++        }
++
++        /**
++         * Get the heat state
++         *
++         * @return
++         */
++        public byte getHeatState() {
++            return heatState;
++        }
++
++        /**
++         * Get the ready state
++         *
++         * @return
++         */
++        public byte getReadyState() {
++            return readyState;
++        }
++
++        /**
++         * Get whether the display is set to celcius
++         *
++         * @return
++         */
++        public boolean getCelciusDisplay() {
++            return celcius;
++        }
++
++        /**
++         * Get the filter state
++         *
++         * @return
++         */
++        public byte getFilterState() {
++            return filterState;
++        }
++
++        /**
++         * Get the temperatures
++         *
++         * @param target Set true if the target temperature is desired.
++         * @return the target temperature if called with true, otherwise the current temperature.
++         */
++        public double getTemperature(boolean target) {
++            return target ? targetTemperature : currentTemperature;
++        }
++    }
++
++    /**
++     * The {@link InformationResponseMessage} messages are sent in response to a corresponding
++     * {@link SettingsRequestMessage}
++     * messages.
++     *
++     * @author Carl Önnheim - Initial contribution
++     */
++    static public class InformationResponseMessage extends BalboaMessage implements BalboaMessage.Inbound {
++        public static final int MESSAGE_TYPE = 0x0abf24;
++        public static final int MESSAGE_LENGTH = 28;
++
++        public InformationResponseMessage(byte[] buffer) {
++            logger.trace("Information Response received");
++            // TODO: Implement the parsing of this message and link to relevant channels.
++        }
++    }
++
++    /**
++     * The {@link PanelConfigurationResponseMessage} messages are sent in response to a corresponding
++     * {@link SettingsRequestMessage}
++     * messages.
++     *
++     * @author Carl Önnheim - Initial contribution
++     */
++    static public class PanelConfigurationResponseMessage extends BalboaMessage implements BalboaMessage.Inbound {
++        public static final int MESSAGE_TYPE = 0x0abf2e;
++        public static final int MESSAGE_LENGTH = 13;
++
++        private byte[] pumps = new byte[BalboaProtocol.MAX_PUMPS];
++        private byte[] lights = new byte[BalboaProtocol.MAX_LIGHTS];
++        private boolean[] aux = new boolean[BalboaProtocol.MAX_AUX];
++        private byte mister;
++        private byte circulation;
++        private byte blower;
++
++        public PanelConfigurationResponseMessage(byte[] buffer) {
++
++            // Determine the pump configuration
++            pumps[0] = (byte) (buffer[5] & 0x03);
++            pumps[1] = (byte) ((buffer[5] >> 2) & 0x03);
++            pumps[2] = (byte) ((buffer[5] >> 4) & 0x03);
++            pumps[3] = (byte) ((buffer[5] >> 6) & 0x03);
++            pumps[4] = (byte) ((buffer[6] >> 2) & 0x03);
++            pumps[5] = (byte) ((buffer[6] >> 6) & 0x03);
++            logger.debug("Panel Configuration: byte5..6 {} {}: Pumps {}", Integer.toBinaryString(buffer[5] & 0xFF),
++                    Integer.toBinaryString(buffer[6] & 0xFF), pumps);
++
++            // Determine the lights configuration.
++            lights[0] = (byte) (buffer[7] & 0x03);
++            lights[1] = (byte) ((buffer[7] >> 6) & 0x03);
++            logger.debug("Panel Configuration: byte7 {}: Lights {}", Integer.toBinaryString(buffer[7] & 0xFF), lights);
++
++            // Determine circulation and blower
++            blower = (byte) (buffer[8] & 0x03);
++            circulation = (byte) ((buffer[8] >> 6) & 0x03);
++            logger.debug("Panel Configuration: byte8 {}: circulation {}, blower {}",
++                    Integer.toBinaryString(buffer[8] & 0xFF), circulation, blower);
++
++            // Determine the aux and mister configuration.
++            aux[0] = (buffer[9] & 0x01) != 0;
++            aux[1] = (buffer[9] & 0x02) != 0;
++            mister = (byte) ((buffer[9] >> 4) & 0x03);
++            logger.debug("Panel Configuration: byte9 {}: AUX {}, mister {}", Integer.toBinaryString(buffer[9] & 0xFF),
++                    aux, mister);
++        }
++
++        /**
++         * Gets the configuration of the pump at index i
++         *
++         * @param i
++         * @return the configuration byte
++         */
++        public byte getPump(int i) {
++            if (i < 0 || i > BalboaProtocol.MAX_PUMPS) {
++                return 0;
++            } else {
++                return pumps[i];
++            }
++        }
++
++        /**
++         * Gets the configuration of the light at index i
++         *
++         * @param i
++         * @return the configuration byte
++         */
++        public byte getLight(int i) {
++            if (i < 0 || i > BalboaProtocol.MAX_LIGHTS) {
++                return 0;
++            } else {
++                return lights[i];
++            }
++        }
++
++        /**
++         * Gets the configuration of the aux at index i
++         *
++         * @param i
++         * @return the existence of the aux item
++         */
++        public boolean getAux(int i) {
++            if (i < 0 || i > BalboaProtocol.MAX_AUX) {
++                return false;
++            } else {
++                return aux[i];
++            }
++        }
++
++        /**
++         * Gets the blower configuration
++         *
++         * @return the blower configuration
++         */
++        public byte getBlower() {
++            return blower;
++        }
++
++        /**
++         * Gets the circulation configuration
++         *
++         * @return the circulation configuration
++         */
++        public byte getCirculation() {
++            return circulation;
++        }
++
++        /**
++         * Gets the mister configuration
++         *
++         * @return the mister configuration
++         */
++        public byte getMister() {
++            return mister;
++        }
++    }
++
++    /**
++     * Constructs a {@link BalboaMessage}
++     */
++    private BalboaMessage() {
++    }
++
++    /**
++     * Constructs a {@link BalboaMessage} for an unrecognized message type and payload.
++     *
++     * @param messageType
++     * @param payload
++     */
++    private BalboaMessage(int messageType, byte[] payload) {
++        logger.trace("{}", String.format("Unrecognized Message type 0x%x: %s", messageType,
++                DatatypeConverter.printHexBinary(payload)));
++    }
++
++    /**
++     * Get the Message Type of a {@link BalboaMessage}.
++     *
++     * @return The message type or zero if not available.
++     */
++    public int getMessageType() {
++        try {
++            // Get the field through introspection, thus returning the overridden values in the subclasses.
++            return this.getClass().getField("MESSAGE_TYPE").getInt(null);
++        } catch (Throwable e) {
++            return 0;
++        }
++    }
++
++    /**
++     * Get the expected length of a a {@link BalboaMessage} derived class.
++     *
++     * @return The expected length of an encoded message
++     */
++    static public int getMessageLength(@Nullable Class<? extends BalboaMessage> cls) {
++        try {
++            // Get the field through introspection, thus returning the overridden values in the subclasses.
++            return cls.getField("MESSAGE_LENGTH").getInt(null);
++        } catch (Throwable e) {
++            return 0;
++        }
++    }
++
++    /**
++     * Get get a {@link BalboaMessage} instance from a buffer.
++     *
++     * @return A new {@link BalboaMessage} instance.
++     */
++    static public @Nullable BalboaMessage fromBuffer(byte[] buffer) {
++
++        // Determine the message type (bitmasking 0xFF effectively treats the bytes as unsigned)
++        int messageType = (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 8 | (buffer[4] & 0xFF);
++
++        // Check if it is implemented
++        if (messageTypeMap.containsKey(messageType)) {
++            // Lookup the class which handles the message type
++            Class<? extends BalboaMessage> cls = messageTypeMap.get(messageType);
++
++            // Check that the buffer has the appropriate length
++            int expectedLength = getMessageLength(cls);
++            if (buffer.length < expectedLength) {
++                logger.debug("Buffer length {} is too short for a {}, need at least {}", buffer.length, cls.getName(),
++                        expectedLength);
++                return null;
++            }
++
++            try {
++                // Find the constructor and call it
++                return cls.getConstructor(byte[].class).newInstance(buffer);
++            } catch (Throwable e) {
++                logger.debug("Failed to instantiate {}: {}", cls.getName(), e.getMessage());
++                return null;
++            }
++        } else {
++            // Default to the generic message if not known
++            return new BalboaMessage(messageType, buffer);
++        }
++    }
++
++    /*
++     * Helpers to check if data on currently unknown bits in a message changes.
++     */
++    private static HashMap<Integer, byte[]> lastMaskedBuffer = new HashMap<Integer, byte[]>();
++
++    /**
++     * Prints information about the message in buffer, masked to only show the unknown bits
++     *
++     * @param buffer
++     * @param unknown
++     */
++    protected void displayUnknownBits(byte[] buffer, byte[] unknown) {
++        // No need to prepare the data if it is not going to be traced.
++        if (!logger.isTraceEnabled()) {
++            return;
++        }
++
++        // Consistency check
++        if (unknown.length != buffer.length) {
++            throw new IllegalArgumentException("Buffer and unknown mask must be the same length");
++        }
++
++        // Determine the message type (bitmasking 0xFF effectively treats the bytes as unsigned)
++        int messageType = (buffer[2] & 0xFF) << 16 | (buffer[3] & 0xFF) << 8 | (buffer[4] & 0xFF);
++
++        // mask out the known data
++        byte[] masked = new byte[buffer.length];
++        for (int i = 0; i < buffer.length; i++) {
++            masked[i] = (byte) (buffer[i] & unknown[i]);
++        }
++
++        // Check if it is a change from the last message of the same type (same length and same checksum)
++        byte[] last = null;
++        if (lastMaskedBuffer.containsKey(messageType)) {
++            last = lastMaskedBuffer.get(messageType);
++            if (last.length == masked.length) {
++                int i = 0;
++                for (i = 0; i < masked.length; i++) {
++                    if (masked[i] != last[i]) {
++                        break;
++                    }
++                }
++                if (i >= masked.length) {
++                    return;
++                }
++            }
++        }
++
++        // Store it for use in the next pass
++        lastMaskedBuffer.put(messageType, masked);
++
++        // Print the masked buffer as a whole
++        String s = String.format("Changes on unknown bits: %s\n", DatatypeConverter.printHexBinary(masked));
++        // A heading line
++        s = s.concat("          0        1        2        3        4        5        6        7");
++        // Print each byte
++        String s1 = new String("");
++        for (int i = 0; i < masked.length; i++) {
++            // Break line every 8 bytes
++            if (i % 8 == 0) {
++                s = s.concat(s1).concat(String.format("\n%1d0 ", i / 8));
++                s1 = "\n   ";
++            }
++            // Print the byte (blank for known positions)
++            for (int b = 7; b >= 0; b--) {
++                s = s.concat((unknown[i] & (0x01 << b)) == 0 ? " " : (masked[i] & (0x01 << b)) == 0 ? "0" : "1");
++                s1 = s1.concat(last == null ? " " : (last[i] & (0x01 << b)) == (masked[i] & (0x01 << b)) ? " " : "^");
++            }
++            s = s.concat(" ");
++            s1 = s1.concat(" ");
++        }
++        s = s.concat(s1);
++        logger.trace("{}", s);
++    }
++}
+diff --git a/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaProtocol.java b/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaProtocol.java
+new file mode 100644
+index 00000000..7cc2109f
+--- /dev/null
++++ b/bundles/org.openhab.binding.balboa/src/main/java/org/openhab/binding/balboa/internal/BalboaProtocol.java
+@@ -0,0 +1,616 @@
++/**
++ * Copyright (c) 2010-2020 Contributors to the openHAB project
++ *
++ * See the NOTICE file(s) distributed with this work for additional
++ * information.
++ *
++ * This program and the accompanying materials are made available under the
++ * terms of the Eclipse Public License 2.0 which is available at
++ * http://www.eclipse.org/legal/epl-2.0
++ *
++ * SPDX-License-Identifier: EPL-2.0
++ */
++package org.openhab.binding.balboa.internal;
++
++import java.io.IOException;
++import java.net.InetSocketAddress;
++import java.nio.ByteBuffer;
++import java.nio.channels.AsynchronousSocketChannel;
++import java.nio.channels.CompletionHandler;
++import java.util.LinkedList;
++
++import javax.xml.bind.DatatypeConverter;
++
++import org.eclipse.jdt.annotation.NonNull;
++import org.eclipse.jdt.annotation.NonNullByDefault;
++import org.eclipse.jdt.annotation.Nullable;
++import org.openhab.binding.balboa.internal.BalboaMessage.PanelConfigurationResponseMessage;
++import org.openhab.binding.balboa.internal.BalboaMessage.SettingsRequestMessage.SettingsType;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++
++/**
++ * The {@link BalboaProtocol} implements the communication protocol with Balboa control units.
++ *
++ * @author Carl Önnheim - Initial contribution
++ */
++@NonNullByDefault
++public class BalboaProtocol {
++
++    private final Logger logger = LoggerFactory.getLogger(BalboaProtocol.class);
++
++    // Constants
++    private static final int BUF_SIZE = 512;
++    private static final int DEFAULT_PORT = 4257;
++    public static final int MAX_PUMPS = 6;
++    public static final int MAX_LIGHTS = 2;
++    public static final int MAX_AUX = 2;
++
++    // Variables
++    private @Nullable AsynchronousSocketChannel socket = null;
++    private BalboaProtocol.Handler handler;
++    private Writer writer = new Writer();
++    private Reader reader = new Reader();
++    private boolean babble = false;
++    private Status status = Status.INITIAL;
++
++    /**
++     * Constructor for {@link BalboaProtocol} with a given {@link BalboaProtocol.Handler}
++     *
++     */
++    public BalboaProtocol(BalboaProtocol.Handler handler) {
++        this.handler = handler;
++    }
++
++    // Start and end separator on each message
++    private static final byte MESSAGE_SEPARATOR = 0x7e;
++    // Parameters for the CRC check
++    private static byte[] crcTable;
++    private static final byte INIT = 0x02;
++    private static final byte POLY = 0x07;
++    private static final byte FINAL_XOR = 0x02;
++
++    /**
++     * Enumerates the statuses the protocol can be in. Possible transitions are
++     * INITIAL: ERROR, CONNECTING
++     * CONNECTING: ERROR, OFFLINE, CONFIGURATION_PENDING
++     * CONFIGURATION_PENDING: ONLINE, OFFLINE
++     * ONLINE: OFFLINE
++     * OFFLINE: ERROR, CONNECTING
++     * ERROR: CONNECTING
++     *
++     * @author CarlÖnnheim
++     *
++     */
++    public enum Status {
++        INITIAL,
++        CONNECTING,
++        OFFLINE,
++        ERROR,
++        CONFIGURATION_PENDING,
++        ONLINE
++    }
++
++    /**
++     * Callback interface for Handlers. The handlers receive callbacks when the protocol state changes and when messages
++     * are received
++     *
++     * @author CarlÖnnheim
++     *
++     */
++    public interface Handler {
++        /**
++         * Callback for when the protocol transitions between states
++         *
++         * @param status The new status
++         * @param detail A descriptive string of the status detail
++         */
++        public void onStateChange(Status status, String detail);
++
++        /**
++         * Callback for when the protocol receives a message
++         *
++         * @param message The received message
++         */
++        public void onMessage(BalboaMessage message);
++    }
++
++    /**
++     * Internal handler when a message is received. Calls the external handler when done with internal processing
++     *
++     * @param message
++     */
++    private void onMessage(BalboaMessage message) {
++        // Pass the message to the caller (this configures channels if it is a PanelConfiguration)
++        handler.onMessage(message);
++
++        // Handle internal state updates after that
++        switch (message.getMessageType()) {
++            case PanelConfigurationResponseMessage.MESSAGE_TYPE:
++                setStatus(Status.ONLINE, "");
++                break;
++            default:
++                break;
++        }
++    }
++
++    /**
++     * Returns if this {@link BalboaProtocol} will babble or not
++     *
++     * Balboa units provide status updates several times per second. All of them will be returned if the protocol is set
++     * to babble. Sequential messages with the same CRC value will be discarded otherwise. The CRC includes the
++     * message type and status updates include the clock to minute accuracy. It is thus in practice safe to discard
++     * these (status updates will come through at least once per minute anyway).
++     *
++     */
++    public boolean babble() {
++        return babble;
++    }
++
++    /**
++     * Sets the {@link BalboaProtocol} to babble or not.
++     *
++     * @param babble Set to true to not suppress repetitive messages.
++     */
++    public void babble(boolean babble) {
++        this.babble = babble;
++    }
++
++    /**
++     * Initialize the crc lookup table
++     */
++    static {
++        crcTable = new byte[256];
++        // Produce the result for all possible bytes
++        for (int dividend = 0; dividend < 256; dividend++) {
++            byte currByte = (byte) dividend;
++            // Process each bit
++            for (byte bit = 0; bit < 8; bit++) {
++                // If the MSB is set, shift and XOR
++                if ((currByte & 0x80) != 0) {
++                    currByte <<= 1;
++                    currByte ^= POLY;
++                } else {
++                    // Otherwise, just shift
++                    currByte <<= 1;
++                }
++            }
++            // Store the result
++            crcTable[dividend] = currByte;
++        }
++
++    }
++
++    /**
++     * CRC calculation routine
++     *
++     * @param buffer Shall contain a full message, including start and stop bytes.
++     * @return the CRC value, which is to be stored in the second last position of the buffer on complete messages.
++     */
++    private static byte calculateCrc(byte[] buffer) {
++        // Initialisation value
++        byte crc = INIT;
++        // Start from the length byte (start + 1), exclude the last two bytes (CRC and stop byte)
++        for (int i = 1; i < buffer.length - 2; i++) {
++            crc = crcTable[(buffer[i] ^ crc) & 0xFF];
++        }
++        // Final xor and return
++        return (byte) (crc ^ FINAL_XOR);
++    }
++
++    /**
++     * Sends a {@link BalboaMessage.Outbound}
++     *
++     * @param message the outbound message to send
++     */
++    public void sendMessage(BalboaMessage.Outbound message) {
++        // Delegate to the writer instance
++        writer.sendMessage(message);
++    }
++
++    /**
++     * The inner {@link Writer} class provides queued access to the underlying socket.
++     *
++     * @author Carl Önnheim
++     *
++     */
++    private class Writer implements CompletionHandler<@Nullable Integer, ByteBuffer> {
++
++        private LinkedList<ByteBuffer> queue = new LinkedList<ByteBuffer>();;
++        private boolean writeInProgress = false;
++
++        /**
++         * Resets a {@link BalboaProtocol.Writer}, should be called between connects (clears the queue).
++         *
++         */
++        synchronized public void reset() {
++            queue.clear();
++        }
++
++        /**
++         * Sends a message to the balboa unit. Queues it if a write is already in progress
++         *
++         * @param message
++         */
++        public void sendMessage(BalboaMessage.Outbound message) {
++
++            // Get the payload
++            byte[] payload = message.getPayload();
++
++            // Length excluding first separator and the length byte itself
++            byte messageLength = (byte) (payload.length + 5);
++
++            // Allocate a buffer for the message including separators
++            byte[] buffer = new byte[messageLength + 2];
++
++            // Build up the full message
++            // Message start and length
++            buffer[0] = MESSAGE_SEPARATOR;
++            buffer[1] = messageLength;
++            // Message type
++            int mt = message.getMessageType();
++            buffer[2] = (byte) ((mt >> 16) & 0xFF);
++            buffer[3] = (byte) ((mt >> 8) & 0xFF);
++            buffer[4] = (byte) (mt & 0xFF);
++            // The payload
++            for (int i = 0; i < payload.length; i++) {
++                buffer[i + 5] = payload[i];
++            }
++            // CRC
++            buffer[messageLength] = calculateCrc(buffer);
++            // Message end
++            buffer[messageLength + 1] = MESSAGE_SEPARATOR;
++
++            // Wrap the data in a ByteBuffer and start writing it
++            logger.trace("Writing {} bytes: {}", buffer.length, DatatypeConverter.printHexBinary(buffer));
++            startWrite(ByteBuffer.wrap(buffer));
++        }
++
++        /**
++         * Starts writing a prepared buffer. The write is queued if needed.
++         *
++         * @param buffer The buffer to write
++         */
++        synchronized private void startWrite(ByteBuffer buffer) {
++
++            // Queue the item if writing is already in progress
++            if (writeInProgress) {
++                queue.add(buffer);
++            } else {
++                // Otherwise start writing
++                logger.trace("Write session started");
++                writeInProgress = true;
++                if (socket != null) {
++                    socket.write(buffer, buffer, this);
++                } else {
++                    // Abort if we are not connected
++                    writeInProgress = false;
++                    throw new IllegalStateException("Cannot send message while not connected");
++                }
++            }
++        }
++
++        /**
++         * Completion handler. Makes sure the message was written in full and picks up the next message from the queue
++         * if any.
++         */
++        @Override
++        synchronized public void completed(@Nullable Integer result, ByteBuffer buffer) {
++            // Check if the message was written in full, otherwise resume the write
++            if (buffer.position() < buffer.limit()) {
++                logger.trace("Partial write, resuming");
++                if (socket != null) {
++                    socket.write(buffer, buffer, this);
++                    return;
++                } else {
++                    // This cannot happen ("failed" would be called instead), but handled for style
++                    writeInProgress = false;
++                }
++            }
++
++            // Check if there is anything queued
++            if (queue.isEmpty()) {
++                // If not, we are done with this write session
++                logger.trace("Write session ended");
++                writeInProgress = false;
++            } else {
++                // Something is on the queue, trigger the next write
++                logger.trace("Message queued, write session continued");
++                ByteBuffer b = queue.remove();
++                if (socket != null) {
++                    socket.write(b, b, this);
++                } else {
++                    // This cannot happen ("failed" would be called instead), but handled for style
++                    writeInProgress = false;
++                }
++            }
++        }
++
++        @Override
++        synchronized public void failed(@Nullable Throwable exc, ByteBuffer buffer) {
++            // Something failed. Disconnect the protocol
++            writeInProgress = false;
++            disconnect();
++        }
++    }
++
++    /**
++     * The inner {@link Reader} class decodes messages from the underlying socket.
++     *
++     * @author Carl Önnheim
++     *
++     */
++    private class Reader implements CompletionHandler<@Nullable Integer, @NonNull BalboaProtocol.Reader> {
++
++        private ByteBuffer readBuffer = ByteBuffer.allocate(BUF_SIZE);
++        private byte lastCRC = 0;
++
++        /**
++         * Resets a {@link BalboaProtocol.Reader}, should be called between connects
++         *
++         */
++        synchronized public void reset() {
++            readBuffer.clear();
++        }
++
++        /**
++         * The read completion handler decodes {@link BalboaMessage} objects from a received buffer.
++         *
++         */
++        @Override
++        public void completed(@Nullable Integer result, BalboaProtocol.Reader me) {
++            // Negative number of bytes read means we lost the connection. Cleanup.
++            if (result == null || result < 0) {
++                disconnect();
++                return;
++            }
++
++            // Limit the buffer at the end of the read and rewind to the start of the buffer.
++            readBuffer.limit(readBuffer.position());
++            readBuffer.rewind();
++
++            logger.trace("{} bytes from Balboa Unit, buffer has {} bytes: {}", result, readBuffer.remaining(),
++                    DatatypeConverter.printHexBinary(readBuffer.array()).substring(0, 2 * readBuffer.remaining()));
++
++            // Decode messages (there may be more than one)
++            while (readBuffer.hasRemaining()) {
++                // Mark the position, if we do not get a full message we need to go back to this position
++                readBuffer.mark();
++
++                // The first byte must be a separator
++                byte startByte = readBuffer.get();
++                if (startByte != MESSAGE_SEPARATOR) {
++                    logger.debug("Message did not start with {}, got {}", MESSAGE_SEPARATOR, startByte);
++                    // Discard the whole buffer in this case
++                    readBuffer.position(0);
++                    readBuffer.limit(0);
++                    break;
++                }
++
++                // Second byte is the length byte
++                int messageLength = readBuffer.get();
++
++                // Make sure the full message is in the buffer
++                if (messageLength > readBuffer.remaining()) {
++                    logger.trace("Incomplete message, waiting for more data");
++                    // Return to the start mark and stop processing
++                    readBuffer.reset();
++                    break;
++                }
++
++                // Suppress the babble by comparing CRC values, which is the second last position of the new message.
++                if (readBuffer.get(readBuffer.position() + messageLength - 2) == lastCRC && !babble
++                        && status == Status.ONLINE) {
++                    logger.trace("Suppressed repeated message");
++                    // Move to the next message
++                    readBuffer.position(readBuffer.position() + messageLength);
++                    continue;
++                }
++
++                // Extract the full message
++                byte[] message = new byte[messageLength + 2];
++                message[0] = startByte;
++                message[1] = (byte) messageLength;
++                readBuffer.get(message, 2, messageLength);
++                logger.debug("Processing message: {}", DatatypeConverter.printHexBinary(message));
++
++                // Check that there is a separator at the end.
++                if (message[message.length - 1] != MESSAGE_SEPARATOR) {
++                    logger.debug("Message did not end with {}", MESSAGE_SEPARATOR);
++                    // Discard the whole buffer in this case
++                    readBuffer.position(0);
++                    readBuffer.limit(0);
++                    break;
++                }
++
++                // Length must be at least 5 (3 bytes message type, crc and separator)
++                if (messageLength < 5) {
++                    logger.debug("Message without message code received");
++                    // The individual message is corrupt, but the buffer is sane - proceed to the next message
++                    continue;
++                }
++
++                // Calculate the checksum and validate it.
++                byte crc = calculateCrc(message);
++                if (crc != message[message.length - 2]) {
++                    logger.debug("CRC Error: calculated {}, received {} for buffer {}", crc,
++                            message[message.length - 2], DatatypeConverter.printHexBinary(message));
++                    // The individual message is corrupt, but the buffer is sane - proceed to the next message
++                    continue;
++                }
++
++                // Remember the crc value for the next run (used to detect babble)
++                lastCRC = crc;
++
++                // Instantiate the message and callback if successful
++                BalboaMessage balboaMessage = BalboaMessage.fromBuffer(message);
++                if (balboaMessage != null) {
++                    onMessage(balboaMessage);
++                }
++            }
++
++            // Prepare the buffer to receive more data
++            if (readBuffer.position() < readBuffer.limit()
++                    && (readBuffer.limit() < readBuffer.capacity() || readBuffer.position() > 0)) {
++                // There is unprocessed data on the buffer and room left (after or before the valid data).
++                readBuffer.compact();
++                readBuffer.limit(readBuffer.capacity());
++            } else {
++                // Otherwise start from scratch
++                readBuffer.clear();
++            }
++
++            // Start a new read (wait for more data)
++            start();
++        }
++
++        /**
++         * Starts a {@link BalboaProtocol.Reader}
++         *
++         */
++        public void start() {
++            if (socket != null) {
++                socket.read(readBuffer, this, this);
++            } else {
++                logger.debug("Attempted to read while not connected");
++                throw new IllegalStateException("Not connected");
++            }
++        }
++
++        @Override
++        public void failed(@Nullable Throwable exc, BalboaProtocol.Reader me) {
++            // Something failed. Disconnect the protocol
++            disconnect();
++        }
++    }
++
++    /**
++     * Sets the status internally and invokes the callback.
++     *
++     * @param status The status to set
++     * @param detail The detailed description
++     */
++    private void setStatus(Status status, String detail) {
++        this.status = status;
++        handler.onStateChange(status, detail);
++    }
++
++    /**
++     * Connects a {@link BalboaProtocol} on the default port (4257)
++     *
++     * @param host the hostname or ip address of the control unit.
++     *
++     */
++    public void connect(String host) {
++        // Connect to the default port
++        connect(host, DEFAULT_PORT);
++    }
++
++    /**
++     * Connects a {@link BalboaProtocol}
++     *
++     * @param host the hostname or ip address of the control unit.
++     * @param port the port to connect to.
++     */
++    public synchronized void connect(String host, int port) {
++
++        // Do nothing if a connection is already in progress
++        if (status == Status.CONNECTING) {
++            return;
++        }
++
++        // Update status
++        setStatus(Status.CONNECTING, "Connecting");
++
++        // Disconnect first if we are already connected
++        if (socket != null) {
++            disconnect();
++        }
++
++        // Resolve the host address
++        InetSocketAddress hostAddress = null;
++        try {
++            hostAddress = new InetSocketAddress(host, port);
++        } catch (Exception e) {
++            setStatus(Status.ERROR, e.toString());
++            return;
++        }
++
++        // Check that the resolution was successful
++        if (hostAddress.isUnresolved()) {
++            logger.debug("Failed to resolve host: {}", host);
++            setStatus(Status.ERROR, String.format("Failed to resolve %s", host));
++            return;
++        }
++
++        // Connect to the control unit
++        try {
++            socket = AsynchronousSocketChannel.open();
++        } catch (IOException e) {
++            logger.debug("Socket creation failed: {}", e.getMessage());
++            handler.onStateChange(Status.ERROR, e.toString());
++            return;
++        }
++        if (socket != null) {
++            // Try to connect
++            socket.connect(hostAddress, this, new CompletionHandler<@Nullable Void, @NonNull BalboaProtocol>() {
++                @Override
++                public void completed(@Nullable Void result, BalboaProtocol bp) {
++                    // We are connected, but not configured yet. Request the information and update status
++                    writer.sendMessage(new BalboaMessage.SettingsRequestMessage(SettingsType.INFORMATION));
++                    writer.sendMessage(new BalboaMessage.SettingsRequestMessage(SettingsType.PANEL));
++                    setStatus(Status.CONFIGURATION_PENDING, "Configuration request sent");
++
++                    // Start the reader
++                    reader.start();
++                }
++
++                @Override
++                public void failed(@Nullable Throwable exc, BalboaProtocol bp) {
++                    // Failed to connect, report the error
++                    String detail;
++                    if (exc == null) {
++                        detail = "Connection Failed";
++                    } else {
++                        detail = String.format("Connection Failed: %s", exc.getMessage());
++                    }
++                    logger.debug("{}", detail);
++                    setStatus(Status.ERROR, detail);
++                    // Mark the socket as not valid and reset the reader/writer
++                    socket = null;
++                    reader.reset();
++                    writer.reset();
++                }
++            });
++            logger.debug("Balboa protocol connecting");
++        }
++    }
++
++    /**
++     * Disconnects a {@link BalboaProtocol}
++     *
++     */
++    public synchronized void disconnect() {
++
++        if (socket != null) {
++            // Close the socket. Not much to do with any errors here.
++            try {
++                socket.close();
++                logger.debug("Balboa protocol disconnecting");
++            } catch (IOException e) {
++                logger.warn("Failed to close the connection to the Balboa Control Unit: {}", e.getMessage());
++            }
++        } else {
++            logger.debug("Not connected when disconnect attempted.");
++        }
++
++        // The socket is no longer valid, i.e. we are disconnected.
++        socket = null;
++
++        // Reset the reader and writer
++        reader.reset();
++        writer.reset();
++
++        setStatus(Status.OFFLINE, "Disconnected");
++    }
++}
+diff --git a/bundles/org.openhab.binding.balboa/src/main/resources/OH-INF/binding/binding.xml b/bundles/org.openhab.binding.balboa/src/main/resources/OH-INF/binding/binding.xml
+new file mode 100644
+index 00000000..9c430593
+--- /dev/null
++++ b/bundles/org.openhab.binding.balboa/src/main/resources/OH-INF/binding/binding.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<binding:binding id="balboa" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++	xmlns:binding="https://openhab.org/schemas/binding/v1.0.0"
++	xsi:schemaLocation="https://openhab.org/schemas/binding/v1.0.0 https://openhab.org/schemas/binding-1.0.0.xsd">
++
++	<name>Balboa Binding</name>
++	<description>This is the binding for Balboa.</description>
++
++</binding:binding>
+diff --git a/bundles/org.openhab.binding.balboa/src/main/resources/OH-INF/i18n/balboa_xx_XX.properties b/bundles/org.openhab.binding.balboa/src/main/resources/OH-INF/i18n/balboa_xx_XX.properties
+new file mode 100644
+index 00000000..1c265fb7
+--- /dev/null
++++ b/bundles/org.openhab.binding.balboa/src/main/resources/OH-INF/i18n/balboa_xx_XX.properties
+@@ -0,0 +1,17 @@
++# FIXME: please substitute the xx_XX with a proper locale, ie. de_DE
++# FIXME: please do not add the file to the repo if you add or change no content
++# binding
++binding.balboa.name = <Your localized Binding name>
++binding.balboa.description = <Your localized Binding description>
++
++# thing types
++thing-type.balboa.sample.label = <Your localized Thing label>
++thing-type.balboa.sample.description = <Your localized Thing description>
++
++# thing type config description
++thing-type.config.balboa.sample.config1.label = <Your localized config parameter label>
++thing-type.config.balboa.sample.config1.description = <Your localized config parameter description>
++
++# channel types
++channel-type.balboa.sample-channel.label = <Your localized Channel label>
++channel-type.balboa.sample-channel.description = <Your localized Channel description>
+diff --git a/bundles/org.openhab.binding.balboa/src/main/resources/OH-INF/thing/thing-types.xml b/bundles/org.openhab.binding.balboa/src/main/resources/OH-INF/thing/thing-types.xml
+new file mode 100644
+index 00000000..55448741
+--- /dev/null
++++ b/bundles/org.openhab.binding.balboa/src/main/resources/OH-INF/thing/thing-types.xml
+@@ -0,0 +1,221 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<thing:thing-descriptions bindingId="balboa"
++	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
++	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
++	<thing-type id="balboa-ip">
++		<label>Balboa IP Unit</label>
++		<description>Balboa Unit connected over IP</description>
++		<properties>
++			<property name="vendor">Balboa</property>
++			<property name="modelId">Generic Balboa Unit</property>
++			<property name="protocol">WiFi</property>
++		</properties>
++		<representation-property>uniqueID</representation-property>
++		<config-description>
++			<parameter name="host" type="text" required="true">
++				<label>Host</label>
++				<description>The hostname or IP address of the Balboa Unit</description>
++				<context>network-address</context>
++			</parameter>
++			<parameter name="port" type="integer" required="true" min="0" max="65535">
++				<label>Port</label>
++				<description>The port to connect to, default is 4257.</description>
++				<default>4257</default>
++			</parameter>
++			<parameter name="reconnectInterval" type="integer" required="true" min="1" max="600">
++				<label>Reconnect Interval</label>
++				<description>Number of seconds to wait before reconnecting.</description>
++				<default>30</default>
++			</parameter>
++			<parameter name="pollingInterval" type="integer" required="true" min="30" max="600">
++				<label>Polling Interval</label>
++				<description>Number of seconds to between polling packets.</description>
++				<default>60</default>
++			</parameter>
++		</config-description>
++	</thing-type>
++	<channel-type id="target-temperature">
++		<item-type>Number:Temperature</item-type>
++		<label>Target Temperature</label>
++		<description>Target Temperature</description>
++		<tags>
++			<tag>TargetTemperature</tag>
++		</tags>
++		<state step="0.5" pattern="%.1f %unit%"/>
++	</channel-type>
++	<channel-type id="current-temperature">
++		<item-type>Number:Temperature</item-type>
++		<label>Current Temperature</label>
++		<description>Current Temperature</description>
++		<tags>
++			<tag>CurrentTemperature</tag>
++		</tags>
++		<state pattern="%.1f %unit%" readOnly="true"/>
++	</channel-type>
++	<channel-type id="priming">
++		<item-type>Contact</item-type>
++		<label>Priming</label>
++		<description>Priming</description>
++		<state readOnly="true"/>
++	</channel-type>
++	<channel-type id="circulation">
++		<item-type>Contact</item-type>
++		<label>Circulation Pump</label>
++		<description>Circulation Pump</description>
++		<state readOnly="true"/>
++	</channel-type>
++	<channel-type id="heater">
++		<item-type>Contact</item-type>
++		<label>Heater</label>
++		<description>Heater</description>
++		<state readOnly="true"/>
++	</channel-type>
++	<channel-type id="pump1">
++		<item-type>Switch</item-type>
++		<label>Jet Pump, one-speed</label>
++		<description>Jet Pump, one-speed</description>
++		<tags>
++			<tag>Switchable</tag>
++		</tags>
++	</channel-type>
++	<channel-type id="pump2">
++		<item-type>String</item-type>
++		<label>Jet Pump, two-speed</label>
++		<description>Jet Pump, two-speed</description>
++		<tags>
++			<tag>Switchable</tag>
++		</tags>
++		<state>
++			<options>
++				<option value="OFF">Off</option>
++				<option value="LOW">Low</option>
++				<option value="HIGH">High</option>
++			</options>
++		</state>
++	</channel-type>
++	<channel-type id="light1">
++		<item-type>Switch</item-type>
++		<label>Lights</label>
++		<description>Lights</description>
++		<tags>
++			<tag>Lighting</tag>
++		</tags>
++	</channel-type>
++	<channel-type id="light2">
++		<item-type>String</item-type>
++		<label>Lights, two levels</label>
++		<description>Lights, two levels</description>
++		<tags>
++			<tag>Lighting</tag>
++		</tags>
++		<state>
++			<options>
++				<option value="OFF">Off</option>
++				<option value="LOW">Low</option>
++				<option value="HIGH">High</option>
++			</options>
++		</state>
++	</channel-type>
++	<channel-type id="aux">
++		<item-type>Switch</item-type>
++		<label>AUX Channel</label>
++		<description>AUX Channel</description>
++		<tags>
++			<tag>Switchable</tag>
++		</tags>
++	</channel-type>
++	<channel-type id="blower1">
++		<item-type>Switch</item-type>
++		<label>Blower, one-speed</label>
++		<description>Blower, one-speed</description>
++		<tags>
++			<tag>Switchable</tag>
++		</tags>
++	</channel-type>
++	<channel-type id="blower2">
++		<item-type>String</item-type>
++		<label>Blower, 2-speed</label>
++		<description>Blower, 2-speed</description>
++		<tags>
++			<tag>Switchable</tag>
++		</tags>
++		<state>
++			<options>
++				<option value="OFF">Off</option>
++				<option value="LOW">Low</option>
++				<option value="HIGH">High</option>
++			</options>
++		</state>
++	</channel-type>
++	<channel-type id="mister1">
++		<item-type>Switch</item-type>
++		<label>Mister, one-speed</label>
++		<description>Mister, one-speed</description>
++		<tags>
++			<tag>Switchable</tag>
++		</tags>
++	</channel-type>
++	<channel-type id="mister2">
++		<item-type>String</item-type>
++		<label>Mister, 2-speed</label>
++		<description>Mister, 2-speed</description>
++		<tags>
++			<tag>Switchable</tag>
++		</tags>
++		<state>
++			<options>
++				<option value="OFF">Off</option>
++				<option value="LOW">Low</option>
++				<option value="HIGH">High</option>
++			</options>
++		</state>
++	</channel-type>
++	<channel-type id="heat-mode">
++		<item-type>String</item-type>
++		<label>Heat Mode</label>
++		<description>Heat Mode</description>
++		<state>
++			<options>
++				<option value="READY">Ready</option>
++				<option value="REST">Rest</option>
++				<option value="READY_IN_REST">Ready in Rest</option>
++			</options>
++		</state>
++	</channel-type>
++	<channel-type id="temperature-scale">
++		<item-type>String</item-type>
++		<label>Temperature Scale</label>
++		<description>Temperature Scale</description>
++		<state>
++			<options>
++				<option value="C">Celcius</option>
++				<option value="F">Fahrenheit</option>
++			</options>
++		</state>
++	</channel-type>
++	<channel-type id="temperature-range">
++		<item-type>String</item-type>
++		<label>Temperature Range</label>
++		<description>Temperature Range</description>
++		<state>
++			<options>
++				<option value="HIGH">High</option>
++				<option value="LOW">Low</option>
++			</options>
++		</state>
++	</channel-type>
++	<channel-type id="filter">
++		<item-type>String</item-type>
++		<label>Filter Status</label>
++		<description>Filter Status</description>
++		<state readOnly="true">
++			<options>
++				<option value="OFF">Off</option>
++				<option value="1">Filter 1</option>
++				<option value="2">Filter 2</option>
++				<option value="1+2">Filter 1+2</option>
++			</options>
++		</state>
++	</channel-type>
++</thing:thing-descriptions>
+diff --git a/bundles/pom.xml b/bundles/pom.xml
+index 5586147c..fe77d12b 100644
+--- a/bundles/pom.xml
++++ b/bundles/pom.xml
+@@ -1,553 +1,1082 @@
+ <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+-
++<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
++    
+   <modelVersion>4.0.0</modelVersion>
+-
++    
+   <parent>
++        
+     <groupId>org.openhab.addons</groupId>
++        
+     <artifactId>org.openhab.addons.reactor</artifactId>
++        
+     <version>3.1.0-SNAPSHOT</version>
++      
+   </parent>
+-
++    
+   <groupId>org.openhab.addons.bundles</groupId>
++    
+   <artifactId>org.openhab.addons.reactor.bundles</artifactId>
++    
+   <packaging>pom</packaging>
+-
++    
+   <name>openHAB Add-ons :: Bundles</name>
+-
++    
+   <modules>
++        
+     <!-- automation -->
++        
+     <module>org.openhab.automation.groovyscripting</module>
++        
+     <module>org.openhab.automation.jythonscripting</module>
++        
+     <module>org.openhab.automation.pidcontroller</module>
++        
+     <!-- io -->
++        
+     <module>org.openhab.io.homekit</module>
++        
+     <module>org.openhab.io.hueemulation</module>
++        
+     <module>org.openhab.io.imperihome</module>
++        
+     <module>org.openhab.io.neeo</module>
++        
+     <module>org.openhab.io.openhabcloud</module>
++        
+     <!-- transformations -->
++        
+     <module>org.openhab.transform.bin2json</module>
++        
+     <module>org.openhab.transform.exec</module>
++        
+     <module>org.openhab.transform.javascript</module>
++        
+     <module>org.openhab.transform.jinja</module>
++        
+     <module>org.openhab.transform.jsonpath</module>
++        
+     <module>org.openhab.transform.map</module>
++        
+     <module>org.openhab.transform.regex</module>
++        
+     <module>org.openhab.transform.scale</module>
++        
+     <module>org.openhab.transform.xpath</module>
++        
+     <module>org.openhab.transform.xslt</module>
++        
+     <!-- bindings -->
++        
+     <module>org.openhab.binding.adorne</module>
++        
+     <module>org.openhab.binding.airquality</module>
++        
+     <module>org.openhab.binding.airvisualnode</module>
++        
+     <module>org.openhab.binding.alarmdecoder</module>
++        
+     <module>org.openhab.binding.allplay</module>
++        
+     <module>org.openhab.binding.amazondashbutton</module>
++        
+     <module>org.openhab.binding.amazonechocontrol</module>
++        
+     <module>org.openhab.binding.ambientweather</module>
++        
+     <module>org.openhab.binding.astro</module>
++        
+     <module>org.openhab.binding.atlona</module>
++        
+     <module>org.openhab.binding.autelis</module>
++        
+     <module>org.openhab.binding.automower</module>
++        
+     <module>org.openhab.binding.avmfritz</module>
++    <module>org.openhab.binding.balboa</module>
++        
+     <module>org.openhab.binding.bigassfan</module>
++        
+     <module>org.openhab.binding.bluetooth</module>
++        
+     <module>org.openhab.binding.bluetooth.airthings</module>
++        
+     <module>org.openhab.binding.bluetooth.am43</module>
++        
+     <module>org.openhab.binding.bluetooth.bluegiga</module>
++        
+     <module>org.openhab.binding.bluetooth.bluez</module>
++        
+     <module>org.openhab.binding.bluetooth.blukii</module>
++        
+     <module>org.openhab.binding.bluetooth.daikinmadoka</module>
++        
+     <module>org.openhab.binding.bluetooth.enoceanble</module>
++        
+     <module>org.openhab.binding.bluetooth.generic</module>
++        
+     <module>org.openhab.binding.bluetooth.roaming</module>
++        
+     <module>org.openhab.binding.bluetooth.ruuvitag</module>
++        
+     <module>org.openhab.binding.boschindego</module>
++        
+     <module>org.openhab.binding.bosesoundtouch</module>
++        
+     <module>org.openhab.binding.bsblan</module>
++        
+     <module>org.openhab.binding.bticinosmarther</module>
++        
+     <module>org.openhab.binding.buienradar</module>
++        
+     <module>org.openhab.binding.caddx</module>
++        
+     <module>org.openhab.binding.cbus</module>
++        
+     <module>org.openhab.binding.chromecast</module>
++        
+     <module>org.openhab.binding.cm11a</module>
++        
+     <module>org.openhab.binding.comfoair</module>
++        
+     <module>org.openhab.binding.coolmasternet</module>
++        
+     <module>org.openhab.binding.coronastats</module>
++        
+     <module>org.openhab.binding.daikin</module>
++        
+     <module>org.openhab.binding.danfossairunit</module>
++        
+     <module>org.openhab.binding.darksky</module>
++        
+     <module>org.openhab.binding.deconz</module>
++        
+     <module>org.openhab.binding.denonmarantz</module>
++        
+     <module>org.openhab.binding.digiplex</module>
++        
+     <module>org.openhab.binding.digitalstrom</module>
++        
+     <module>org.openhab.binding.dlinksmarthome</module>
++        
+     <module>org.openhab.binding.dmx</module>
++        
+     <module>org.openhab.binding.doorbird</module>
++        
+     <module>org.openhab.binding.draytonwiser</module>
++        
+     <module>org.openhab.binding.dscalarm</module>
++        
+     <module>org.openhab.binding.dsmr</module>
++        
+     <module>org.openhab.binding.dwdpollenflug</module>
++        
+     <module>org.openhab.binding.dwdunwetter</module>
++        
+     <module>org.openhab.binding.ecobee</module>
++        
+     <module>org.openhab.binding.elerotransmitterstick</module>
++        
+     <module>org.openhab.binding.energenie</module>
++        
+     <module>org.openhab.binding.enigma2</module>
++        
+     <module>org.openhab.binding.enocean</module>
++        
+     <module>org.openhab.binding.enturno</module>
++        
+     <module>org.openhab.binding.epsonprojector</module>
++        
+     <module>org.openhab.binding.etherrain</module>
++        
+     <module>org.openhab.binding.evohome</module>
++        
+     <module>org.openhab.binding.exec</module>
++        
+     <module>org.openhab.binding.feed</module>
++        
+     <module>org.openhab.binding.feican</module>
++        
+     <module>org.openhab.binding.fmiweather</module>
++        
+     <module>org.openhab.binding.folding</module>
++        
+     <module>org.openhab.binding.foobot</module>
++        
+     <module>org.openhab.binding.freebox</module>
++        
+     <module>org.openhab.binding.fronius</module>
++        
+     <module>org.openhab.binding.fsinternetradio</module>
++        
+     <module>org.openhab.binding.ftpupload</module>
++        
+     <module>org.openhab.binding.gardena</module>
++        
+     <module>org.openhab.binding.gce</module>
++        
+     <module>org.openhab.binding.generacmobilelink</module>
++        
+     <module>org.openhab.binding.goecharger</module>
++        
+     <module>org.openhab.binding.globalcache</module>
++        
+     <module>org.openhab.binding.gpstracker</module>
++        
+     <module>org.openhab.binding.gree</module>
++        
+     <module>org.openhab.binding.groheondus</module>
++        
+     <module>org.openhab.binding.harmonyhub</module>
++        
+     <module>org.openhab.binding.hdanywhere</module>
++        
+     <module>org.openhab.binding.hdpowerview</module>
++        
+     <module>org.openhab.binding.helios</module>
++        
+     <module>org.openhab.binding.heliosventilation</module>
++        
+     <module>org.openhab.binding.heos</module>
++        
+     <module>org.openhab.binding.homematic</module>
++        
+     <module>org.openhab.binding.hpprinter</module>
++        
+     <module>org.openhab.binding.http</module>
++        
+     <module>org.openhab.binding.hue</module>
++        
+     <module>org.openhab.binding.hydrawise</module>
++        
+     <module>org.openhab.binding.hyperion</module>
++        
+     <module>org.openhab.binding.iammeter</module>
++        
+     <module>org.openhab.binding.iaqualink</module>
++        
+     <module>org.openhab.binding.icalendar</module>
++        
+     <module>org.openhab.binding.icloud</module>
++        
+     <module>org.openhab.binding.ihc</module>
++        
+     <module>org.openhab.binding.innogysmarthome</module>
++        
+     <module>org.openhab.binding.insteon</module>
++        
+     <module>org.openhab.binding.ipcamera</module>
++        
+     <module>org.openhab.binding.intesis</module>
++        
+     <module>org.openhab.binding.ipp</module>
++        
+     <module>org.openhab.binding.irobot</module>
++        
+     <module>org.openhab.binding.irtrans</module>
++        
+     <module>org.openhab.binding.ism8</module>
++        
+     <module>org.openhab.binding.jablotron</module>
++        
+     <module>org.openhab.binding.jeelink</module>
++        
+     <module>org.openhab.binding.kaleidescape</module>
++        
+     <module>org.openhab.binding.keba</module>
++        
+     <module>org.openhab.binding.km200</module>
++        
+     <module>org.openhab.binding.knx</module>
++        
+     <module>org.openhab.binding.kodi</module>
++        
+     <module>org.openhab.binding.konnected</module>
++        
+     <module>org.openhab.binding.kostalinverter</module>
++        
+     <module>org.openhab.binding.kvv</module>
++        
+     <module>org.openhab.binding.lametrictime</module>
++        
+     <module>org.openhab.binding.lcn</module>
++        
+     <module>org.openhab.binding.leapmotion</module>
++        
+     <module>org.openhab.binding.lghombot</module>
++        
+     <module>org.openhab.binding.lgtvserial</module>
++        
+     <module>org.openhab.binding.lgwebos</module>
++        
+     <module>org.openhab.binding.lifx</module>
++        
+     <module>org.openhab.binding.linky</module>
++        
+     <module>org.openhab.binding.linuxinput</module>
++        
+     <module>org.openhab.binding.lirc</module>
++        
+     <module>org.openhab.binding.logreader</module>
++        
+     <module>org.openhab.binding.loxone</module>
++        
+     <module>org.openhab.binding.luftdateninfo</module>
++        
+     <module>org.openhab.binding.lutron</module>
++        
+     <module>org.openhab.binding.magentatv</module>
++        
+     <module>org.openhab.binding.mail</module>
++        
+     <module>org.openhab.binding.max</module>
++        
+     <module>org.openhab.binding.mcp23017</module>
++        
+     <module>org.openhab.binding.melcloud</module>
++        
+     <module>org.openhab.binding.meteoalerte</module>
++        
+     <module>org.openhab.binding.meteoblue</module>
++        
+     <module>org.openhab.binding.meteostick</module>
++        
+     <module>org.openhab.binding.miele</module>
++        
+     <module>org.openhab.binding.mihome</module>
++        
+     <module>org.openhab.binding.miio</module>
++        
+     <module>org.openhab.binding.millheat</module>
++        
+     <module>org.openhab.binding.milight</module>
++        
+     <module>org.openhab.binding.minecraft</module>
++        
+     <module>org.openhab.binding.modbus</module>
++        
+     <module>org.openhab.binding.modbus.e3dc</module>
++        
+     <module>org.openhab.binding.modbus.studer</module>
++        
+     <module>org.openhab.binding.modbus.sunspec</module>
++        
+     <module>org.openhab.binding.modbus.stiebeleltron</module>
++        
+     <module>org.openhab.binding.modbus.helioseasycontrols</module>
++        
+     <module>org.openhab.binding.monopriceaudio</module>
++        
+     <module>org.openhab.binding.mpd</module>
++        
+     <module>org.openhab.binding.mqtt</module>
++        
+     <module>org.openhab.binding.mqtt.generic</module>
++        
+     <module>org.openhab.binding.mqtt.homeassistant</module>
++        
+     <module>org.openhab.binding.mqtt.homie</module>
++        
+     <module>org.openhab.binding.mystrom</module>
++        
+     <module>org.openhab.binding.nanoleaf</module>
++        
+     <module>org.openhab.binding.neato</module>
++        
+     <module>org.openhab.binding.neeo</module>
++        
+     <module>org.openhab.binding.neohub</module>
++        
+     <module>org.openhab.binding.nest</module>
++        
+     <module>org.openhab.binding.netatmo</module>
++        
+     <module>org.openhab.binding.network</module>
++        
+     <module>org.openhab.binding.networkupstools</module>
++        
+     <module>org.openhab.binding.nibeheatpump</module>
++        
+     <module>org.openhab.binding.nibeuplink</module>
++        
+     <module>org.openhab.binding.nikobus</module>
++        
+     <module>org.openhab.binding.nikohomecontrol</module>
++        
+     <module>org.openhab.binding.novafinedust</module>
++        
+     <module>org.openhab.binding.ntp</module>
++        
+     <module>org.openhab.binding.nuki</module>
++        
+     <module>org.openhab.binding.nuvo</module>
++        
+     <module>org.openhab.binding.nzwateralerts</module>
++        
+     <module>org.openhab.binding.oceanic</module>
++        
+     <module>org.openhab.binding.ojelectronics</module>
++        
+     <module>org.openhab.binding.omnikinverter</module>
++        
+     <module>org.openhab.binding.onebusaway</module>
++        
+     <module>org.openhab.binding.onewiregpio</module>
++        
+     <module>org.openhab.binding.onewire</module>
++        
+     <module>org.openhab.binding.onkyo</module>
++        
+     <module>org.openhab.binding.opengarage</module>
++        
+     <module>org.openhab.binding.opensprinkler</module>
++        
+     <module>org.openhab.binding.openthermgateway</module>
++        
+     <module>org.openhab.binding.openuv</module>
++        
+     <module>org.openhab.binding.openweathermap</module>
++        
+     <module>org.openhab.binding.openwebnet</module>
++        
+     <module>org.openhab.binding.oppo</module>
++        
+     <module>org.openhab.binding.orvibo</module>
++        
+     <module>org.openhab.binding.paradoxalarm</module>
++        
+     <module>org.openhab.binding.pentair</module>
++        
+     <module>org.openhab.binding.phc</module>
++        
+     <module>org.openhab.binding.pioneeravr</module>
++        
+     <module>org.openhab.binding.pixometer</module>
++        
+     <module>org.openhab.binding.pjlinkdevice</module>
++        
+     <module>org.openhab.binding.playstation</module>
++        
+     <module>org.openhab.binding.plclogo</module>
++        
+     <module>org.openhab.binding.plugwise</module>
++        
+     <module>org.openhab.binding.powermax</module>
++        
+     <module>org.openhab.binding.pulseaudio</module>
++        
+     <module>org.openhab.binding.pushbullet</module>
++        
+     <module>org.openhab.binding.pushover</module>
++        
+     <module>org.openhab.binding.radiothermostat</module>
++        
+     <module>org.openhab.binding.regoheatpump</module>
++        
+     <module>org.openhab.binding.revogi</module>
++        
+     <module>org.openhab.binding.remoteopenhab</module>
++        
+     <module>org.openhab.binding.rfxcom</module>
++        
+     <module>org.openhab.binding.rme</module>
++        
+     <module>org.openhab.binding.robonect</module>
++        
+     <module>org.openhab.binding.rotel</module>
++        
+     <module>org.openhab.binding.russound</module>
++        
+     <module>org.openhab.binding.sagercaster</module>
++        
+     <module>org.openhab.binding.samsungtv</module>
++        
+     <module>org.openhab.binding.satel</module>
++        
+     <module>org.openhab.binding.senechome</module>
++        
+     <module>org.openhab.binding.seneye</module>
++        
+     <module>org.openhab.binding.sensebox</module>
++        
+     <module>org.openhab.binding.sensibo</module>
++        
+     <module>org.openhab.binding.serial</module>
++        
+     <module>org.openhab.binding.serialbutton</module>
++        
+     <module>org.openhab.binding.shelly</module>
++        
+     <module>org.openhab.binding.silvercrestwifisocket</module>
++        
+     <module>org.openhab.binding.siemensrds</module>
++        
+     <module>org.openhab.binding.sinope</module>
++        
+     <module>org.openhab.binding.sleepiq</module>
++        
+     <module>org.openhab.binding.smaenergymeter</module>
++        
+     <module>org.openhab.binding.smartmeter</module>
++        
+     <module>org.openhab.binding.smhi</module>
++        
+     <module>org.openhab.binding.smartthings</module>
++        
+     <module>org.openhab.binding.snmp</module>
++        
+     <module>org.openhab.binding.solaredge</module>
++        
+     <module>org.openhab.binding.solarlog</module>
++        
+     <module>org.openhab.binding.somfymylink</module>
++        
+     <module>org.openhab.binding.somfytahoma</module>
++        
+     <module>org.openhab.binding.sonos</module>
++        
+     <module>org.openhab.binding.sonyaudio</module>
++        
+     <module>org.openhab.binding.sonyprojector</module>
++        
+     <module>org.openhab.binding.spotify</module>
++        
+     <module>org.openhab.binding.squeezebox</module>
++        
+     <module>org.openhab.binding.synopanalyzer</module>
++        
+     <module>org.openhab.binding.systeminfo</module>
++        
+     <module>org.openhab.binding.tacmi</module>
++        
+     <module>org.openhab.binding.tado</module>
++        
+     <module>org.openhab.binding.tankerkoenig</module>
++        
+     <module>org.openhab.binding.telegram</module>
++        
+     <module>org.openhab.binding.teleinfo</module>
++        
+     <module>org.openhab.binding.tellstick</module>
++        
+     <module>org.openhab.binding.tesla</module>
++        
+     <module>org.openhab.binding.tibber</module>
++        
+     <module>org.openhab.binding.touchwand</module>
++        
+     <module>org.openhab.binding.tplinksmarthome</module>
++        
+     <module>org.openhab.binding.tr064</module>
++        
+     <module>org.openhab.binding.tradfri</module>
++        
+     <module>org.openhab.binding.unifi</module>
++        
+     <module>org.openhab.binding.unifiedremote</module>
++        
+     <module>org.openhab.binding.upnpcontrol</module>
++        
+     <module>org.openhab.binding.upb</module>
++        
+     <module>org.openhab.binding.urtsi</module>
++        
+     <module>org.openhab.binding.valloxmv</module>
++        
+     <module>org.openhab.binding.vektiva</module>
++        
+     <module>org.openhab.binding.velbus</module>
++        
+     <module>org.openhab.binding.velux</module>
++        
+     <module>org.openhab.binding.venstarthermostat</module>
++        
+     <module>org.openhab.binding.verisure</module>
++        
+     <module>org.openhab.binding.vigicrues</module>
++        
+     <module>org.openhab.binding.vitotronic</module>
++        
+     <module>org.openhab.binding.volvooncall</module>
++        
+     <module>org.openhab.binding.weathercompany</module>
++        
+     <module>org.openhab.binding.weatherunderground</module>
++        
+     <module>org.openhab.binding.wemo</module>
++        
+     <module>org.openhab.binding.wifiled</module>
++        
+     <module>org.openhab.binding.windcentrale</module>
++        
+     <module>org.openhab.binding.wlanthermo</module>
++        
+     <module>org.openhab.binding.wled</module>
++        
+     <module>org.openhab.binding.xmltv</module>
++        
+     <module>org.openhab.binding.xmppclient</module>
++        
+     <module>org.openhab.binding.yamahareceiver</module>
++        
+     <module>org.openhab.binding.yioremote</module>
++        
+     <module>org.openhab.binding.yeelight</module>
++        
+     <module>org.openhab.binding.zoneminder</module>
++        
+     <module>org.openhab.binding.zway</module>
++        
+     <!-- persistence -->
++        
+     <module>org.openhab.persistence.dynamodb</module>
++        
+     <module>org.openhab.persistence.influxdb</module>
++        
+     <module>org.openhab.persistence.jdbc</module>
++        
+     <module>org.openhab.persistence.jpa</module>
++        
+     <module>org.openhab.persistence.mapdb</module>
++        
+     <module>org.openhab.persistence.mongodb</module>
++        
+     <module>org.openhab.persistence.rrd4j</module>
++        
+     <!-- voice -->
++        
+     <module>org.openhab.voice.googletts</module>
++        
+     <module>org.openhab.voice.mactts</module>
++        
+     <module>org.openhab.voice.marytts</module>
++        
+     <module>org.openhab.voice.picotts</module>
++        
+     <module>org.openhab.voice.pollytts</module>
++        
+     <module>org.openhab.voice.voicerss</module>
++        
++      
+   </modules>
+-
++    
+   <properties>
++        
+     <m2e.jdt.annotationpath>target/dependency</m2e.jdt.annotationpath>
++        
+     <dep.noembedding/>
++      
+   </properties>
+-
++    
+   <dependencies>
++        
+     <dependency>
++            
+       <groupId>org.lastnpe.eea</groupId>
++            
+       <artifactId>eea-all</artifactId>
++            
+       <version>${eea.version}</version>
++          
+     </dependency>
++        
+     <!-- openHAB core -->
++        
+     <dependency>
++            
+       <groupId>org.openhab.core.bom</groupId>
++            
+       <artifactId>org.openhab.core.bom.compile</artifactId>
++            
+       <type>pom</type>
++            
+       <scope>provided</scope>
++          
+     </dependency>
++        
+     <dependency>
++            
+       <groupId>org.openhab.core.bom</groupId>
++            
+       <artifactId>org.openhab.core.bom.openhab-core</artifactId>
++            
+       <type>pom</type>
++            
+       <scope>provided</scope>
++          
+     </dependency>
++        
+     <dependency>
++            
+       <groupId>org.openhab.core.bom</groupId>
++            
+       <artifactId>org.openhab.core.bom.test</artifactId>
++            
+       <type>pom</type>
++            
+       <scope>test</scope>
++          
+     </dependency>
++        
+     <!-- Distribution -->
++        
+     <dependency>
++            
+       <groupId>org.apache.karaf.features</groupId>
++            
+       <artifactId>framework</artifactId>
++            
+       <version>${karaf.version}</version>
++            
+       <type>kar</type>
++            
+       <optional>true</optional>
++            
+       <exclusions>
++                
+         <exclusion>
++                    
+           <groupId>*</groupId>
++                    
+           <artifactId>*</artifactId>
++                  
+         </exclusion>
++              
+       </exclusions>
++          
+     </dependency>
++        
+     <!-- Repositories -->
++        
+     <dependency>
++            
+       <groupId>org.apache.karaf.features</groupId>
++            
+       <artifactId>standard</artifactId>
++            
+       <version>${karaf.version}</version>
++            
+       <classifier>features</classifier>
++            
+       <type>xml</type>
++            
+       <scope>provided</scope>
++          
+     </dependency>
++      
+   </dependencies>
+-
++    
+   <build>
++        
+     <pluginManagement>
++            
+       <plugins>
++                
+         <plugin>
++                    
+           <groupId>org.apache.maven.plugins</groupId>
++                    
+           <artifactId>maven-jar-plugin</artifactId>
++                    
+           <configuration>
++                        
+             <archive>
++                            
+               <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
++                          
+             </archive>
++                        
+             <skipIfEmpty>true</skipIfEmpty>
++                      
+           </configuration>
++                  
+         </plugin>
++                
+         <plugin>
++                    
+           <groupId>org.apache.karaf.tooling</groupId>
++                    
+           <artifactId>karaf-maven-plugin</artifactId>
++                    
+           <version>${karaf.version}</version>
++                    
+           <extensions>true</extensions>
++                    
+           <configuration>
++                        
+             <startLevel>80</startLevel>
++                        
+             <aggregateFeatures>true</aggregateFeatures>
++                        
+             <checkDependencyChange>true</checkDependencyChange>
++                        
+             <failOnDependencyChange>false</failOnDependencyChange>
++                        
+             <logDependencyChanges>true</logDependencyChanges>
++                        
+             <overwriteChangedDependencies>true</overwriteChangedDependencies>
++                      
+           </configuration>
++                    
+           <executions>
++                        
+             <execution>
++                            
+               <id>compile</id>
++                            
+               <goals>
++                                
+                 <goal>features-generate-descriptor</goal>
++                              
+               </goals>
++                            
+               <phase>generate-resources</phase>
++                            
+               <configuration>
++                                
+                 <inputFile>${feature.directory}</inputFile>
++                              
+               </configuration>
++                          
+             </execution>
++                        
+             <execution>
++                            
+               <id>karaf-feature-verification</id>
++                            
+               <goals>
++                                
+                 <goal>verify</goal>
++                              
+               </goals>
++                            
+               <phase>verify</phase>
++                            
+               <configuration>
++                                
+                 <descriptors combine.children="append">
++                                    
+                   <!-- Apache Karaf -->
++                                    
+                   <descriptor>mvn:org.apache.karaf.features/framework/${karaf.version}/xml/features</descriptor>
++                                    
+                   <descriptor>mvn:org.apache.karaf.features/standard/${karaf.version}/xml/features</descriptor>
++                                    
+                   <!-- Current feature under verification -->
++                                    
+                   <descriptor>file:${project.build.directory}/feature/feature.xml</descriptor>
++                                  
+                 </descriptors>
++                                
+                 <distribution>org.apache.karaf.features:framework</distribution>
++                                
+                 <javase>${oh.java.version}</javase>
++                                
+                 <framework>
++                                    
+                   <feature>framework</feature>
++                                  
+                 </framework>
++                                
+                 <features>
++                                    
+                   <feature>openhab-*</feature>
++                                  
+                 </features>
++                                
+                 <verifyTransitive>false</verifyTransitive>
++                                
+                 <ignoreMissingConditions>true</ignoreMissingConditions>
++                                
+                 <fail>first</fail>
++                              
+               </configuration>
++                          
+             </execution>
++                      
+           </executions>
++                  
+         </plugin>
++              
+       </plugins>
++          
+     </pluginManagement>
+-
++        
+     <plugins>
++            
+       <plugin>
++                
+         <groupId>biz.aQute.bnd</groupId>
++                
+         <artifactId>bnd-maven-plugin</artifactId>
++              
+       </plugin>
++            
+       <plugin>
++                
+         <groupId>org.apache.maven.plugins</groupId>
++                
+         <artifactId>maven-source-plugin</artifactId>
++                
+         <executions>
++                    
+           <execution>
++                        
+             <id>attach-sources</id>
++                        
+             <goals>
++                            
+               <goal>jar-no-fork</goal>
++                          
+             </goals>
++                      
+           </execution>
++                  
+         </executions>
++              
+       </plugin>
++            
+       <plugin>
++                
+         <groupId>org.apache.karaf.tooling</groupId>
++                
+         <artifactId>karaf-maven-plugin</artifactId>
++              
+       </plugin>
++            
+       <!-- embed compile time dependencies by unpacking -->
++            
+       <plugin>
++                
+         <groupId>org.apache.maven.plugins</groupId>
++                
+         <artifactId>maven-dependency-plugin</artifactId>
++                
+         <version>3.1.1</version>
++                
+         <executions>
++                    
+           <execution>
++                        
+             <id>embed-dependencies</id>
++                        
+             <goals>
++                            
+               <goal>unpack-dependencies</goal>
++                          
+             </goals>
++                        
+             <configuration>
++                            
+               <includeScope>runtime</includeScope>
++                            
+               <includeTypes>jar</includeTypes>
++                            
+               <excludeGroupIds>javax.activation,org.apache.karaf.features,org.lastnpe.eea</excludeGroupIds>
++                            
+               <excludeArtifactIds>${dep.noembedding}</excludeArtifactIds>
++                            
+               <outputDirectory>${project.build.directory}/classes</outputDirectory>
++                            
+               <overWriteReleases>true</overWriteReleases>
++                            
+               <overWriteSnapshots>true</overWriteSnapshots>
++                            
+               <excludeTransitive>true</excludeTransitive>
++                            
+               <type>jar</type>
++                          
+             </configuration>
++                      
+           </execution>
++                    
+           <execution>
++                        
+             <id>unpack-eea</id>
++                        
+             <goals>
++                            
+               <goal>unpack</goal>
++                          
+             </goals>
++                        
+             <configuration>
++                            
+               <artifactItems>
++                                
+                 <artifactItem>
++                                    
+                   <groupId>org.lastnpe.eea</groupId>
++                                    
+                   <artifactId>eea-all</artifactId>
++                                    
+                   <version>${eea.version}</version>
++                                    
+                   <overWrite>true</overWrite>
++                                  
+                 </artifactItem>
++                              
+               </artifactItems>
++                          
+             </configuration>
++                      
+           </execution>
++                  
+         </executions>
++              
+       </plugin>
++          
+     </plugins>
++      
+   </build>
+-
++    
+   <profiles>
++        
+     <!-- suppress embedding of dependencies -->
++        
+     <profile>
++            
+       <id>no-embed-dependencies</id>
++            
+       <activation>
++                
+         <file>
++                    
+           <exists>noEmbedDependencies.profile</exists>
++                  
+         </file>
++              
+       </activation>
++            
+       <build>
++                
+         <plugins>
++                    
+           <plugin>
++                        
+             <groupId>org.apache.maven.plugins</groupId>
++                        
+             <artifactId>maven-dependency-plugin</artifactId>
++                        
+             <executions>
++                            
+               <execution>
++                                
+                 <id>embed-dependencies</id>
++                                
+                 <phase>none</phase>
++                              
+               </execution>
++                          
+             </executions>
++                      
+           </plugin>
++                  
+         </plugins>
++              
+       </build>
++          
+     </profile>
++      
+   </profiles>
+-
++  
+ </project>
