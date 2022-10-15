@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2020 Contributors to the openHAB project
+ * Copyright (c) 2010-2021 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -340,7 +340,7 @@ public class BalboaProtocol {
      * @author Carl Önnheim
      *
      */
-    private class Reader implements CompletionHandler<@Nullable Integer, @NonNull BalboaProtocol.Reader> {
+    private class Reader implements CompletionHandler<@Nullable Integer, BalboaProtocol.Reader> {
 
         private ByteBuffer readBuffer = ByteBuffer.allocate(BUF_SIZE);
         private byte lastCRC = 0;
